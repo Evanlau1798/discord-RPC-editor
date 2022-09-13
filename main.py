@@ -35,7 +35,7 @@ class discord_act:
     def get_stored_data(self,id,title):
         try:
             print("get_stored_data")
-            with open(f'.\data\{title}.json',encoding="UTF-8",mode="r") as json_file:
+            with open(f'./data/{title}.json',encoding="UTF-8",mode="r") as json_file:
                 data = load(json_file)
                 try:
                     self.detail = data["User_stored_stat"]["detail"]
@@ -193,7 +193,7 @@ class ctrl_GUI:
     def show_system_tray(self):
         print("system_tray")
         self.ctrl_GUI.hide()
-        image = Image.open(".\lib\icon.png")
+        image = Image.open("./lib/icon.png")
         self.stop = False
         menu=(item('開啟修改器視窗',self.iconActivated,checked=lambda item: self.test), item('關閉狀態修改器', self.close_all))
         self.icon = pyicon(name='discord狀態修改器', title='discord狀態修改器',icon=image, menu=menu)
@@ -262,6 +262,7 @@ class ctrl_GUI:
         else:
             small_pic = None
         buttons = []
+        
         if self.button_activate_checkBox_1.isChecked():
             bt1_title = self.button_title_Entry_1.text()
             bt1_url = self.button_url_Entry_1.text()
@@ -270,6 +271,7 @@ class ctrl_GUI:
                 RPC_cur_stat = "狀態設定失敗"
                 return
             buttons.append({"label": f"{bt1_title}", "url": f"{bt1_url}"})
+            self.cur_button_1.setText(f"{bt1_title}({bt1_url})")
 
         if self.button_activate_checkBox_2.isChecked():
             bt2_title = self.button_title_Entry_2.text()
@@ -279,6 +281,7 @@ class ctrl_GUI:
                 RPC_cur_stat = "狀態設定失敗"
                 return
             buttons.append({"label": f"{self.button_title_Entry_2.text()}", "url": f"{self.button_url_Entry_2.text()}"})
+            self.cur_button_2.setText(f"{bt2_title}({bt2_url})")
         if len(buttons) == 0:
             buttons = None
         
@@ -298,12 +301,10 @@ class ctrl_GUI:
             print("錯誤")
             msg_box.warning("錯誤", e)
         
-        self.cur_status.setText(self.act.stat)
-        self.cur_detail.setText(self.act.detail)
-        self.cur_BigPicture.setText(f"{self.act.pic}({self.act.pic_text})")
-        self.cur_SmallPicture.setText(f"{self.act.small_pic}({self.act.small_pic_text})")
-        self.cur_button_1.setText(f"{self.act.button_1_title}({self.act.button_1_url})")
-        self.cur_button_2.setText(f"{self.act.button_2_title}({self.act.button_2_url})")
+        self.cur_status.setText(stat)
+        self.cur_detail.setText(detail)
+        self.cur_BigPicture.setText(f"{pic}({pic_text})")
+        self.cur_SmallPicture.setText(f"{small_pic}({small_pic_text})")
         return
 
     def overwrite_user_state(self):
@@ -328,7 +329,7 @@ class ctrl_GUI:
                 "button_2_activate":self.button_activate_checkBox_2.isChecked()
                 }}
         json_object = dumps(dictionary, indent = 3)
-        with open(f'.\data\{file_title}.json', "w", encoding="UTF-8") as json_file:
+        with open(f'./data/{file_title}.json', "w", encoding="UTF-8") as json_file:
             json_file.write(json_object)
         json_file.close()
         RPC_cur_stat = "已儲存新的狀態設定檔"
@@ -340,7 +341,7 @@ class ctrl_GUI:
                 msg_box.warning("錯誤", "App ID不能為空")
                 return
             if file in self.dir_list:
-                with open(f'.\data\{file}.json',encoding="UTF-8",mode="r") as json_file:
+                with open(f'./data/{file}.json',encoding="UTF-8",mode="r") as json_file:
                     data = load(json_file)
                     self.app_id = data["User_stored_stat"]["app_id"]
                 json_file.close()
@@ -358,7 +359,7 @@ class ctrl_GUI:
     def start(self):
         print("GUI start")
         self.ctrl_GUI = QMainWindow()
-        QFontDatabase.addApplicationFont(".\lib\SF-Pro-Display-Regular.otf")
+        QFontDatabase.addApplicationFont("./lib/SF-Pro-Display-Regular.otf")
         self.setupUi(self.ctrl_GUI)
         self.ctrl_GUI.show()
         Thread(target = self.set_cur_status, daemon = True).start()
@@ -910,7 +911,7 @@ class ctrl_GUI:
         self.cur_SmallPicture.setMinimumSize(QtCore.QSize(260, 24))
         self.cur_SmallPicture.setMaximumSize(QtCore.QSize(260, 24))
         self.cur_SmallPicture.setSizeIncrement(QtCore.QSize(0, 0))
-        self.cur_SmallPicture.setBaseSize(QtCore.QSize(160, 0))
+        self.cur_SmallPicture.setBaseSize(QtCore.QSize(0, 0))
         self.cur_SmallPicture.setObjectName("cur_SmallPicture")
         self.RPC_state_4.addWidget(self.cur_SmallPicture)
         self.main_status_grid.addLayout(self.RPC_state_4, 4, 2, 1, 1)
@@ -936,7 +937,7 @@ class ctrl_GUI:
         self.cur_button_1.setMinimumSize(QtCore.QSize(260, 24))
         self.cur_button_1.setMaximumSize(QtCore.QSize(260, 24))
         self.cur_button_1.setSizeIncrement(QtCore.QSize(0, 0))
-        self.cur_button_1.setBaseSize(QtCore.QSize(160, 0))
+        self.cur_button_1.setBaseSize(QtCore.QSize(0, 0))
         self.cur_button_1.setObjectName("cur_button_1")
         self.RPC_state_5.addWidget(self.cur_button_1)
         self.main_status_grid.addLayout(self.RPC_state_5, 5, 2, 1, 1)
@@ -962,7 +963,7 @@ class ctrl_GUI:
         self.cur_button_2.setMinimumSize(QtCore.QSize(260, 24))
         self.cur_button_2.setMaximumSize(QtCore.QSize(260, 24))
         self.cur_button_2.setSizeIncrement(QtCore.QSize(0, 0))
-        self.cur_button_2.setBaseSize(QtCore.QSize(160, 0))
+        self.cur_button_2.setBaseSize(QtCore.QSize(0, 0))
         self.cur_button_2.setObjectName("cur_button_2")
         self.horizontalLayout_8.addWidget(self.cur_button_2)
         self.main_status_grid.addLayout(self.horizontalLayout_8, 6, 2, 1, 1)
@@ -1242,7 +1243,7 @@ class UI_start_ui:
 
     def get_file_name(self):
         print("start get_file_name")
-        self.dir_raw_list = listdir(".\data")
+        self.dir_raw_list = listdir("./data")
         self.dir_list = []
         for i in self.dir_raw_list:
             self.dir_list.append(i.split(".")[0])
@@ -1329,8 +1330,7 @@ class UI_start_ui:
         QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.comboBox, activated=self._init_main_ui)
 
     def open_discord_dev(self):
-        url=f"https://discord.com/developers/applications/"
-        open_new(url)
+        open_new("https://discord.com/developers/applications/")
 
     def _init_main_ui(self):
         global file_title
@@ -1416,7 +1416,7 @@ class Ui_Save_As:
             json_object = dumps(self.dictionary, indent = 3)
             save_title = self.lineEdit.text()
             print(save_title)
-            with open(f'.\data\{save_title}.json', "w", encoding="UTF-8") as json_file:
+            with open(f'./data/{save_title}.json', "w", encoding="UTF-8") as json_file:
                 json_file.write(json_object)
             json_file.close()
             self.Save_As.destroy()
@@ -1498,7 +1498,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     #app.setQuitOnLastWindowClosed(False)
     app.setStyleSheet(qdarktheme.load_stylesheet())
-    icon = QtGui.QIcon(".\lib\icon.ico")
+    icon = QtGui.QIcon("./lib/icon.ico")
     msg_box = msg_window()
     msg_box.setWindowIcon(icon)
     print(sys.executable)

@@ -7,6 +7,12 @@
       "pic_text": "Evanlau (rank #1,314,520)",
       "small_pic": "mania",
       "small_pic_text": "osu!mania",
-      "time_counting": false
+      "time_counting": false,
+      "button_1_title": "View beatmap",
+      "button_1_url": "https://osu.ppy.sh/beatmapsets/396221#osu/862088",
+      "button_1_activate": true,
+      "button_2_title": "",
+      "button_2_url": "",
+      "button_2_activate": false
    }
 }

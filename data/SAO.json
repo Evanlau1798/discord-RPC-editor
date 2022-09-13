@@ -1,0 +1,18 @@
+{
+   "User_stored_stat": {
+      "app_id": "1019331982926295141",
+      "detail": "\u5728 \u827e\u6069\u845b\u6717\u7279",
+      "stat": "\u9019\u96d6\u7136\u662f\u904a\u6232 \u4f46\u53ef\u4e0d\u662f\u9b27\u8457\u73a9\u7684",
+      "pic": "sao-main",
+      "pic_text": "\u7b2c\u4e00\u5c64 : \u8d77\u59cb\u57ce\u93ae",
+      "small_pic": "asuna",
+      "small_pic_text": "Player : Asuna",
+      "time_counting": true,
+      "button_1_title": "\u661f\u7206\u6c23\u6d41\u65ac!",
+      "button_1_url": "https://www.youtube.com/watch?v=Kom6qc9FNXQ",
+      "button_1_activate": true,
+      "button_2_title": "Starburst Stream!",
+      "button_2_url": "https://www.youtube.com/watch?v=Kom6qc9FNXQ",
+      "button_2_activate": true
+   }
+}
