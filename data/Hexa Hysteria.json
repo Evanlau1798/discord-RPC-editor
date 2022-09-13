@@ -1,0 +1,18 @@
+{
+   "User_stored_stat": {
+      "app_id": "1002102573546868828",
+      "detail": "\u6b4c\u66f2\u6838\u5fc3 \u6838\u5fc3\u7d44\u54081.0.a",
+      "stat": "\u6b63\u5728\u904a\u73a9:Gravitizer(Hexa 14)",
+      "pic": "game_icon",
+      "pic_text": "",
+      "small_pic": "",
+      "small_pic_text": "",
+      "time_counting": true,
+      "button_1_title": "\u9ede\u6211\u4e0b\u8f09Hexa Hysteria",
+      "button_1_url": "https://play.google.com/store/apps/details?id=com.WiseyeStudio.HexaHysteria&hl=zh-TW",
+      "button_1_activate": true,
+      "button_2_title": "\u9ede\u6211\u89c0\u770b\u904a\u6232\u9810\u544a\u7247",
+      "button_2_url": "https://youtu.be/howDcSWyTIQ",
+      "button_2_activate": true
+   }
+}
