@@ -1176,7 +1176,6 @@ class ctrl_GUI:
         
     def set_cur_status(self):
         global RPC_cur_stat
-        QtCore.QCoreApplication = app
         while self.stop:
             self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:{RPC_cur_stat}"))
             self.cur_user.setText(app.translate("ctrl_GUI", file_title))
