@@ -33,41 +33,26 @@ class discord_act:
             raise Exception(e)
     
     def get_stored_data(self,id,title):
-        try:
-            print("get_stored_data")
-            with open(f'./data/{title}.json',encoding="UTF-8",mode="r") as json_file:
-                data = load(json_file)
-                print(data)
-                self.detail = data.get("User_stored_stat",{}).get("detail","")
-                self.stat = data.get("User_stored_stat",{}).get("stat","")
-                self.pic = data.get("User_stored_stat",{}).get("pic","")
-                self.pic_text = data.get("User_stored_stat",{}).get("pic_text","")
-                self.small_pic = data.get("User_stored_stat",{}).get("small_pic","")
-                self.small_pic_text = data.get("User_stored_stat",{}).get("small_pic_text","")
-                self.time_count = data.get("User_stored_stat",{}).get("time_counting",True)
-                self.button_1_title = data.get("User_stored_stat",{}).get("button_1_title","")
-                self.button_1_url = data.get("User_stored_stat",{}).get("button_1_url","")
-                self.button_1_activate = data.get("User_stored_stat",{}).get("button_1_activate",False)
-                self.button_2_title = data.get("User_stored_stat",{}).get("button_2_title","")
-                self.button_2_url = data.get("User_stored_stat",{}).get("button_2_url","")
-                self.button_2_activate = data.get("User_stored_stat",{}).get("button_2_activate",False)
-            json_file.close()
-            print(self.stat,self.pic,self.pic_text)
-            return
-        except:
-            self.detail = ""
-            self.stat = ""
-            self.pic = ""
-            self.pic_text = ""
-            self.small_pic = ""
-            self.small_pic_text = ""
-            self.time_count = False
-            self.button_1_title = ""
-            self.button_1_url = ""
-            self.button_1_activate = False
-            self.button_2_title = ""
-            self.button_2_url = ""
-            self.button_2_activate = False
+        print("get_stored_data")
+        with open(f'./data/{title}.json',encoding="UTF-8",mode="r") as json_file:
+            data = load(json_file)
+            print(data)
+            self.detail = data.get("User_stored_stat",{}).get("detail","")
+            self.stat = data.get("User_stored_stat",{}).get("stat","")
+            self.pic = data.get("User_stored_stat",{}).get("pic","")
+            self.pic_text = data.get("User_stored_stat",{}).get("pic_text","")
+            self.small_pic = data.get("User_stored_stat",{}).get("small_pic","")
+            self.small_pic_text = data.get("User_stored_stat",{}).get("small_pic_text","")
+            self.time_count = data.get("User_stored_stat",{}).get("time_counting",False)
+            self.button_1_title = data.get("User_stored_stat",{}).get("button_1_title","")
+            self.button_1_url = data.get("User_stored_stat",{}).get("button_1_url","")
+            self.button_1_activate = data.get("User_stored_stat",{}).get("button_1_activate",False)
+            self.button_2_title = data.get("User_stored_stat",{}).get("button_2_title","")
+            self.button_2_url = data.get("User_stored_stat",{}).get("button_2_url","")
+            self.button_2_activate = data.get("User_stored_stat",{}).get("button_2_activate",False)
+        json_file.close()
+        print(self.stat,self.pic,self.pic_text)
+        return
 
     def set_act(self,stat,detail,pic,pic_text,small_pic,small_pic_text,time_set,time_mode,time_stamp,buttons):
         print("set_act")
@@ -192,35 +177,12 @@ class ctrl_GUI:
         print("set_new_state")
         global RPC_cur_stat
         RPC_cur_stat = "狀態套用中..."
-        if len(self.status_entry.text()) != 0:
-            stat = self.status_entry.text()
-        else:
-            stat = None
-
-        if len(self.detail_entry.text()) != 0:
-            detail = self.detail_entry.text()
-        else:
-            detail = None
-
-        if len(self.bigPicture_name_Entry.text()) != 0:
-            pic = self.bigPicture_name_Entry.text()
-        else:
-            pic = None
-
-        if len(self.bigPicture_Entry.text()) != 0:
-            pic_text = self.bigPicture_Entry.text()
-        else:
-            pic_text = None
-
-        if len(self.smallPicture_Entry.text()) != 0:
-            small_pic_text = self.smallPicture_Entry.text()
-        else:
-            small_pic_text = None
-
-        if len(self.smallPicture_name_Entry.text()) != 0:
-            small_pic = self.smallPicture_name_Entry.text()
-        else:
-            small_pic = None
+        stat = self.status_entry.text() if len(self.status_entry.text()) else None
+        detail = self.detail_entry.text() if len(self.detail_entry.text()) else None
+        pic = self.bigPicture_name_Entry.text() if len(self.bigPicture_name_Entry.text()) else None
+        pic_text = self.bigPicture_Entry.text() if len(self.bigPicture_Entry.text()) else None
+        small_pic_text = self.smallPicture_Entry.text() if len(self.smallPicture_Entry.text()) else None
+        small_pic = self.smallPicture_name_Entry.text() if len(self.smallPicture_name_Entry.text()) else None
         buttons = []
         
         if self.button_activate_checkBox_1.isChecked():
