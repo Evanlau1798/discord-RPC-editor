@@ -37,60 +37,20 @@ class discord_act:
             print("get_stored_data")
             with open(f'./data/{title}.json',encoding="UTF-8",mode="r") as json_file:
                 data = load(json_file)
-                try:
-                    self.detail = data["User_stored_stat"]["detail"]
-                except:
-                    self.detail = ""
-                try:
-                    self.stat = data["User_stored_stat"]["stat"]
-                except:
-
-                    self.stat = ""
-                try:
-                    self.pic = data["User_stored_stat"]["pic"]
-                except:
-                    self.pic = ""
-                try:
-                    self.pic_text = data["User_stored_stat"]["pic_text"]
-                except:
-                    self.pic_text = ""
-                try:
-                    self.small_pic = data["User_stored_stat"]["small_pic"]
-                except:
-                    self.small_pic = ""
-                try:
-                    self.small_pic_text = data["User_stored_stat"]["small_pic_text"]
-                except:
-                    self.small_pic_text = ""
-                try:
-                    self.time_count = data["User_stored_stat"]["time_counting"]
-                except:
-                    self.time_count = True
-                try:
-                    self.button_1_title = data["User_stored_stat"]["button_1_title"]
-                except:
-                    self.button_1_title = ""
-                try:
-                    self.button_1_url = data["User_stored_stat"]["button_1_url"]
-                except:
-                    self.button_1_url = ""
-                try:
-                    self.button_1_activate = data["User_stored_stat"]["button_1_activate"]
-                except:
-                    self.button_1_activate = False
-                try:
-                    self.button_2_title = data["User_stored_stat"]["button_2_title"]
-                except:
-                    self.button_2_title = ""
-                try:
-                    self.button_2_url = data["User_stored_stat"]["button_2_url"]
-                except:
-                    self.button_2_url = ""
-                try:
-                    self.button_2_activate = data["User_stored_stat"]["button_2_activate"]
-                except:
-                    self.button_2_activate = False
-                    
+                print(data)
+                self.detail = data.get("User_stored_stat",{}).get("detail","")
+                self.stat = data.get("User_stored_stat",{}).get("stat","")
+                self.pic = data.get("User_stored_stat",{}).get("pic","")
+                self.pic_text = data.get("User_stored_stat",{}).get("pic_text","")
+                self.small_pic = data.get("User_stored_stat",{}).get("small_pic","")
+                self.small_pic_text = data.get("User_stored_stat",{}).get("small_pic_text","")
+                self.time_count = data.get("User_stored_stat",{}).get("time_counting",True)
+                self.button_1_title = data.get("User_stored_stat",{}).get("button_1_title","")
+                self.button_1_url = data.get("User_stored_stat",{}).get("button_1_url","")
+                self.button_1_activate = data.get("User_stored_stat",{}).get("button_1_activate",False)
+                self.button_2_title = data.get("User_stored_stat",{}).get("button_2_title","")
+                self.button_2_url = data.get("User_stored_stat",{}).get("button_2_url","")
+                self.button_2_activate = data.get("User_stored_stat",{}).get("button_2_activate",False)
             json_file.close()
             print(self.stat,self.pic,self.pic_text)
             return
@@ -343,7 +303,7 @@ class ctrl_GUI:
             if file in self.dir_list:
                 with open(f'./data/{file}.json',encoding="UTF-8",mode="r") as json_file:
                     data = load(json_file)
-                    self.app_id = data["User_stored_stat"]["app_id"]
+                    self.app_id = data.get("User_stored_stat",{}).get("app_id","")
                 json_file.close()
                 self.act = discord_act(self.app_id,title=file)
                 self.new_file = True
