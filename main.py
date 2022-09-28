@@ -2112,7 +2112,6 @@ class msg_window(QWidget):
 if __name__ == '__main__':
     print("start discord RPC editor")
     app = QApplication(sys.argv)
-    #app.setQuitOnLastWindowClosed(False)
     app.setStyleSheet(qdarktheme.load_stylesheet())
     msg_box = msg_window()
     print(sys.executable)
