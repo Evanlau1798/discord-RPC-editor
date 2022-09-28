@@ -1,0 +1,39 @@
+{
+   "User_stored_stat": {
+      "app_id": "968963126169051147",
+      "is_script": true,
+      "detail": "\u7206\u809d\u6a21\u64ec\u5668",
+      "stat": "\u6210\u70ba\u9b54\u6cd5\u5e2b\u7684\u8def\u4e0a",
+      "pic": "main",
+      "pic_text": "",
+      "small_pic": "\u4e0d\u986f\u793a\u5716\u7247",
+      "small_pic_text": "",
+      "time_counting": true,
+      "button_1_title": "\u597d\u6b38R6 ACE",
+      "button_1_url": "https://www.youtube.com/watch?v=u_UDePX928Y",
+      "button_1_activate": false,
+      "button_2_title": "",
+      "button_2_url": "",
+      "button_2_activate": false
+   },
+   "Scripted_stored_data": {
+      "time_counting": 10,
+      "detail": [
+         "\u7206\u809d\u6a21\u64ec\u5668",
+         "\u5b8c\u86cb\u4eca\u5929\u4f5c\u696d\u4ea4\u4e0d\u51fa\u4f86"
+      ],
+      "stat": [],
+      "pic": [
+         "main"
+      ],
+      "pic_text": [],
+      "small_pic": [
+         "main"
+      ],
+      "small_pic_text": [],
+      "button_1_title": [],
+      "button_1_url": "",
+      "button_2_title": [],
+      "button_2_url": []
+   }
+}

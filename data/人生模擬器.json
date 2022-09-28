@@ -1,12 +1,70 @@
 {
    "User_stored_stat": {
       "app_id": "969260218494103562",
+      "is_script": true,
       "detail": "\u7fa4\u4f6c\u9664\u6211",
       "stat": "\ud83d\uded0\ud83d\uded0\ud83d\uded0\ud83d\uded0\ud83d\uded0",
       "pic": "imbad",
       "pic_text": "\ud83d\uded0\ud83d\uded0\ud83d\uded0\ud83d\uded0\ud83d\uded0",
       "small_pic": "imbad",
       "small_pic_text": "\ud83d\uded0\ud83d\uded0\ud83d\uded0\ud83d\uded0\ud83d\uded0",
-      "time_counting": false
+      "time_counting": false,
+      "button_1_title": "",
+      "button_1_url": "",
+      "button_1_activate": false,
+      "button_2_title": "",
+      "button_2_url": "",
+      "button_2_activate": false
+   },
+   "Scripted_stored_data": {
+      "time_counting": 10,
+      "detail": [
+         "\u3000\u6e2c",
+         "\u3000\u3000\u8a66",
+         "\u3000\u3000\u3000\u8173",
+         "\u3000\u3000\u3000\u3000\u672c",
+         "\u3000\u3000\u3000\u3000\u3000\u7684",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u7a69",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u5b9a",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u6027",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u4e2d"
+      ],
+      "stat": [
+         "\u3000\u4e00",
+         "\u3000\u3000\u4e8c",
+         "\u3000\u3000\u3000\u4e09",
+         "\u3000\u3000\u3000\u3000\u56db",
+         "\u3000\u3000\u3000\u3000\u3000\u4e94",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u516d",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u4e03",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u516b",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u4e5d",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u5341",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u4e5d",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u516b",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u3000\u4e03",
+         "\u3000\u3000\u3000\u3000\u3000\u3000\u516d",
+         "\u3000\u3000\u3000\u3000\u3000\u4e94",
+         "\u3000\u3000\u3000\u3000\u56db",
+         "\u3000\u3000\u3000\u4e09",
+         "\u3000\u3000\u4e8c",
+         "\u3000\u4e00"
+      ],
+      "pic": [
+         "imbad"
+      ],
+      "pic_text": [
+         "imbad"
+      ],
+      "small_pic": [
+         "danger"
+      ],
+      "small_pic_text": [
+         "danger"
+      ],
+      "button_1_title": [],
+      "button_1_url": [],
+      "button_2_title": [],
+      "button_2_url": []
    }
 }
