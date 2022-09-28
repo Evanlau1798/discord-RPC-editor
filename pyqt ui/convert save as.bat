@@ -1,0 +1,1 @@
+pyuic5 -x SaveAs.ui -o SaveAs.py

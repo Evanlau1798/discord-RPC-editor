@@ -1,0 +1,1 @@
+pyuic5 -x reload.ui -o reload.py
