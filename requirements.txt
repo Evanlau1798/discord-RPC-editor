@@ -1,0 +1,4 @@
+pyqtdarktheme
+pyqt5
+requests
+pypresence
