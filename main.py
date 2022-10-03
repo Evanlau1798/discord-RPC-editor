@@ -11,7 +11,7 @@ import sys
 import requests
 
 file_title = ""
-version = "discord狀態修改器 v1.1"
+version = "discord狀態修改器 v1.1 beta公開測試版"
 
 class ctrl_GUI:
     def __init__(self,dir_list):
@@ -45,7 +45,22 @@ class ctrl_GUI:
         self.ctrl_GUI.show()
         self.init_script_setting_window()
         self._init_system_tray()
+        Thread(target=self.thread_checker,daemon=True).start()
         return
+
+    def thread_checker(self):
+        while True:
+            sleep(1000)
+            if not self.istray:
+                window = 0
+                for tl in QtWidgets.QApplication.topLevelWidgets():
+                    if not tl.isHidden():
+                        window += 1
+                if window == 0:
+                    self.script_stat_activate = False
+                    app.quit()
+                    self.app.close()
+                    return
 
     def start_discord_act(self,id,title):
         try:
@@ -303,7 +318,6 @@ class ctrl_GUI:
             cycle_small_pic_text = self.cycle(self.scripted_small_pic_text)
         else:
             cycle_small_pic_text = None
-
         set_act_times = 0
         try:
             while self.script_stat_activate:
@@ -336,7 +350,6 @@ class ctrl_GUI:
                 except:pass
                 set_ui_lable_thread  = Thread(target = self.set_script_status_UI_lable,daemon=True,args=[stat,detail,pic,pic_text,small_pic,small_pic_text,scripted_button_1_title,scripted_button_1_url,button_1_list_pos,scripted_button_2_title,scripted_button_2_url,button_2_list_pos])
                 set_ui_lable_thread.run()
-                
                 while self.script_stat_activate:
                     cur_time = int(QtCore.QDateTime.currentDateTime().toPyDateTime().timestamp())
                     elapsed_time = cur_time - start_time
@@ -345,16 +358,6 @@ class ctrl_GUI:
                         start_time += change_time
                         break
                     else:
-                        if not self.istray:
-                            window = 0
-                            for tl in QtWidgets.QApplication.topLevelWidgets():
-                                if not tl.isHidden():
-                                    window += 1
-                            if window == 0:
-                                self.script_stat_activate = False
-                                app.quit()
-                                self.app.close()
-                                return
                         QtTest.QTest.qWait(50)
                         self.statusBar.showMessage(f"腳本模式(下次狀態更新:{change_time - elapsed_time}，已更換腳本次數:{set_act_times}，每{change_time}秒更新一次)")
                         QtTest.QTest.qWait(50)
@@ -434,7 +437,6 @@ class ctrl_GUI:
             self.cur_button_2.setText(f"{bt2_title}({bt2_url})")
         if len(buttons) == 0:
             buttons = None
-        
         if self.open_time_counting_checkBox.isChecked():
             time_stamp = int(self.time_setting.dateTime().toPyDateTime().timestamp())
             time_set = True
@@ -451,7 +453,6 @@ class ctrl_GUI:
         except Exception as e:
             log.info("錯誤")
             msg_box.warning("錯誤", e)
-        
         self.cur_status.setText(stat)
         self.cur_detail.setText(detail)
         self.cur_BigPicture.setText(f"{pic}({pic_text})")
@@ -1837,7 +1838,6 @@ class ctrl_GUI:
             self.temp_scripted_button_2_title = data
         elif self.Previous_title == "按鈕二網址":
             self.temp_scripted_button_2_url = data
-        
         if title == "主標":
             temp = self.list_to_textEdit(self.temp_scripted_detail)
         elif title == "副標":
@@ -2218,5 +2218,5 @@ if __name__ == '__main__':
     log.info(path.abspath(__file__))
     msg_box.setWindowIcon(icon)
     log.logging_ui.setWindowIcon(icon)
-    app.setQuitOnLastWindowClosed(False)
+    sleep = QtTest.QTest.qWait
     UI_start_ui()
