@@ -3,7 +3,7 @@ from pypresence import Presence
 from threading import Thread
 from json import load,dumps,loads
 from PyQt5 import QtCore, QtGui, QtWidgets,QtTest
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl,QThread
 from PyQt5.QtGui import QFontDatabase,QTextCursor,QDesktopServices
 from PyQt5.QtWidgets import QMessageBox,QWidget, QApplication, QShortcut, QMainWindow,QSystemTrayIcon
 import qdarktheme
@@ -11,21 +11,21 @@ import sys
 import requests
 
 file_title = ""
+version = "discord狀態修改器 v1.1"
 
 class ctrl_GUI:
     def __init__(self,dir_list):
-        print("start discord game state")
+        log.info("start discord game state")
         self.dir_list = dir_list
         self.test = False
         self.stop = True
         self.save_window = None
-        print("_init_discord_act")
+        if len(file_title) == 0:
+            msg_box.warning("錯誤", "App ID不能為空")
+            return
         try:
-            if len(file_title) == 0:
-                msg_box.warning("錯誤", "App ID不能為空")
-                return
             if file_title in self.dir_list:
-                with open(f'./data/{file_title}.json',encoding="UTF-8",mode="r") as json_file:
+                with open(f'.\data\{file_title}.json',encoding="UTF-8",mode="r") as json_file:
                     data = load(json_file)
                     self.app_id = data.get("User_stored_stat",{}).get("app_id","")
                 json_file.close()
@@ -35,26 +35,28 @@ class ctrl_GUI:
                 self.app_id = file_title
                 self.act = self.start_discord_act(id=self.app_id,title=int(self.app_id))
                 self.new_file = False
-            self.ctrl_GUI = QMainWindow()
-            self.setupUi(self.ctrl_GUI)
-            self.add_picture()
-            self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態未啟動"))
-            self.ctrl_GUI.show()
-            self.init_script_setting_window()
-            self._init_system_tray()
-        except Exception as e:
-            print("錯誤")
-            msg_box.warning("錯誤", e)
+        except:
+            raise Exception("檔案內容為不支援的資料形式\n請重新選擇或重新建立存檔")
+        
+        self.ctrl_GUI = QMainWindow()
+        self.setupUi(self.ctrl_GUI)
+        self.add_picture()
+        self.statusBar.showMessage("尚未啟動狀態")
+        self.ctrl_GUI.show()
+        self.init_script_setting_window()
+        self._init_system_tray()
+        return
 
     def start_discord_act(self,id,title):
         try:
-            print("start init discord_act")
+            log.info("start init discord_act")
             self.cur_start = True
             self.app = Presence(id)
             self.app.connect()
             self.get_stored_data(id, title)
             self.stop = False
             self.cur_start = False
+            self.istray = False
         except Exception as e:
             err_code = ['result','存取被拒','Could not find Discord installed and running on this machine.']
             for i in err_code:
@@ -63,7 +65,7 @@ class ctrl_GUI:
             raise Exception(e)
     
     def get_stored_data(self,id,title):
-        print("get_stored_data")
+        log.info("get_stored_data")
         with open(f'./data/{title}.json',encoding="UTF-8",mode="r") as json_file:
             data = load(json_file)
             self.is_script = data.get("User_stored_stat",{}).get("is_script",False)
@@ -93,11 +95,11 @@ class ctrl_GUI:
             self.scripted_button_2_url:list = data.get("Scripted_stored_data",{}).get("button_2_url",[])
             self.scripted_time = data.get("Scripted_stored_data",{}).get("time_counting",1)
         json_file.close()
-        print(self.stat,self.pic,self.pic_text)
+        log.info(f"File Read:{title}")
         return
 
     def set_act(self,stat,detail,pic,pic_text,small_pic,small_pic_text,time_set,time_mode,time_stamp,buttons):
-        print("set_act")
+        log.info("set_act")
         instance = True
         cur_time = int(QtCore.QDateTime.currentDateTime().toPyDateTime().timestamp())
         try:
@@ -131,7 +133,7 @@ class ctrl_GUI:
                 msg_box.warning('錯誤', e)
 
     def _init_system_tray(self):
-        print("system_tray")
+        log.info("system_tray")
         self.tray = QSystemTrayIcon()
         self.tray.setIcon(icon)
         self.tray.setToolTip("Discord狀態修改器")
@@ -139,57 +141,30 @@ class ctrl_GUI:
         self.tray.setVisible(True)
         self.tray.hide()
 
-    '''def show_system_tray(self):
-        print("system_tray")
-        self.ctrl_GUI.hide()
-        image = Image.open("./lib/icon.png")
-        self.stop = False
-        menu=(item('開啟修改器視窗',self.iconActivated,checked=lambda item: self.test), item('關閉狀態修改器', self.close_all))
-        self.icon = pyicon(name='discord狀態修改器', title='discord狀態修改器',icon=image, menu=menu)
-        self.icon.run()'''
-
     def close_all(self):
-        print("User Exit")
+        log.info("User Exit")
         self.ctrl_GUI = None
     
     def iconActivated(self):
-        print("tray_menu_click")
+        log.info("tray_menu_click")
         self.tray.hide()
         self.ctrl_GUI.show()
-        self.stop = True
+        self.istray = False
 
     def window_minimum(self):
-        print("window_minimum")
+        log.info("window_minimum")
         self.tray.show()
         self.ctrl_GUI.destroy()
+        self.istray = True
     
     def set_new_script_state(self):
-        print("set_new_script_state")
-        try:
-            if self.set_script_state_thread.is_alive():
-                self.script_stat_activate = False
-                while self.set_script_state_thread.is_alive():
-                    self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:正在等待目前狀態結束..."))
-                    QtTest.QTest.qWait(100)
-                self.set_script_state_thread = Thread(target = self.set_new_script_state_thread, daemon = True)
-                self.script_stat_activate = True
-                self.set_script_state_thread.start()
-                self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:腳本狀態設定成功"))
-            else:
-                self.script_stat_activate = True
-                self.set_script_state_thread = Thread(target = self.set_new_script_state_thread, daemon = True)
-                self.set_script_state_thread.start()
-        except:
-            self.script_stat_activate = True
-            self.set_script_state_thread = Thread(target = self.set_new_script_state_thread, daemon = True)
-            self.set_script_state_thread.start()
-        
+        log.info("set_new_script_state")
+        self.activate_status_button.setEnabled(False)
+        self.script_stat_activate = False
 
-    def set_new_script_state_thread(self):
-        start_time = int(QtCore.QDateTime.currentDateTime().toPyDateTime().timestamp())
-        change_time = self.scripted_time
         time_stamp = int(self.time_setting.dateTime().toPyDateTime().timestamp())
         time_mode = self.time_mode.currentText()
+        start_time = int(QtCore.QDateTime.currentDateTime().toPyDateTime().timestamp())
         button_1_isChecked = self.button_activate_checkBox_1.isChecked()
         button_2_isChecked = self.button_activate_checkBox_2.isChecked()
         if self.open_time_counting_checkBox.isChecked():
@@ -200,6 +175,9 @@ class ctrl_GUI:
                 if time_stamp > start_time:
                     msg_box.warning("錯誤", "經過時間為負數")
                     self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態設定失敗"))
+                    self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                    self.activate_status_button.setEnabled(True)
+                    self.app.clear()
                     return
                 start_time_stamp = time_stamp
                 end_time_stamp = None
@@ -207,6 +185,9 @@ class ctrl_GUI:
                 if time_stamp < start_time:
                     msg_box.warning("錯誤", "剩餘時間為負數")
                     self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態設定失敗"))
+                    self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                    self.activate_status_button.setEnabled(True)
+                    self.app.clear()
                     return
                 start_time_stamp = None
                 end_time_stamp = time_stamp
@@ -214,6 +195,80 @@ class ctrl_GUI:
             start_time_stamp = None
             end_time_stamp = None
 
+        if button_1_isChecked:
+            if len(self.scripted_button_1_title) == 0:
+                msg_box.warning("腳本錯誤","按鈕一標題的腳本沒有資料\n若不須開啟按鈕一\n請不要勾選「開啟按鈕一」")
+                self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                self.activate_status_button.setEnabled(True)
+                self.app.clear()
+                return
+            else:
+                scripted_button_1_title = self.scripted_button_1_title
+            if len(self.scripted_button_1_url) == 0:
+                msg_box.warning("腳本錯誤","按鈕一連結的腳本沒有資料\n若不須開啟按鈕一\n請不要勾選「開啟按鈕一」")
+                self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                self.activate_status_button.setEnabled(True)
+                self.app.clear()
+                return
+            else:
+                scripted_button_1_url = self.scripted_button_1_url
+            button_1 = self.button_1_cycle(scripted_button_1_title,scripted_button_1_url)
+        else:
+            button_1 = None
+            scripted_button_1_title = None
+            scripted_button_1_url = None
+            #button_1_list_pos = None
+
+        QtTest.QTest.qWait(10)
+        if button_2_isChecked:
+            if len(self.scripted_button_2_title) == 0:
+                msg_box.warning("腳本錯誤","按鈕二標題的腳本沒有資料\n若不須開啟按鈕二\n請不要勾選「開啟按鈕二」")
+                self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                self.activate_status_button.setEnabled(True)
+                self.app.clear()
+                return
+            else:
+                scripted_button_2_title = self.scripted_button_2_title
+            if len(self.scripted_button_2_url) == 0:
+                msg_box.warning("腳本錯誤","按鈕二連結的腳本沒有資料\n若不須開啟按鈕二\n請不要勾選「開啟按鈕二」")
+                self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                self.activate_status_button.setEnabled(True)
+                self.app.clear()
+                return
+            else:
+                scripted_button_2_url = self.scripted_button_2_url
+            button_2 = self.button_2_cycle(scripted_button_2_title,scripted_button_2_url)
+        else:
+            button_2 = None
+            scripted_button_2_title = None
+            scripted_button_2_url = None
+            #button_2_list_pos = None
+        
+        try:
+            while self.set_script_state_thread.is_alive():
+                self.cur_status_grid_title.setText("目前狀態:正在等待目前狀態結束...")
+                self.set_script_state_thread.join()
+        except:pass
+        self.set_script_state_thread = Thread(target = self.set_new_script_state_thread,
+            args=[button_1,button_2,
+                scripted_button_1_title,scripted_button_1_url,
+                scripted_button_2_title,scripted_button_2_url,
+                start_time_stamp,end_time_stamp,start_time] ,
+            daemon = True)
+        self.script_stat_activate = True
+        self.cur_status_grid_title.setText("目前狀態:腳本狀態設定成功")
+        self.set_script_state_thread.start()
+        QtTest.QTest.qWait(10)
+        self.activate_status_button.setEnabled(True)
+        return
+
+    def set_new_script_state_thread(self,button_1,button_2,
+            scripted_button_1_title,scripted_button_1_url,
+            scripted_button_2_title,scripted_button_2_url,
+            start_time_stamp,end_time_stamp,start_time):
+        change_time = self.scripted_time
+        button_1_isChecked = self.button_activate_checkBox_1.isChecked()
+        button_2_isChecked = self.button_activate_checkBox_2.isChecked()
         if len(self.scripted_stat) != 0:
             cycle_stat = self.cycle(self.scripted_stat)
         else:
@@ -248,41 +303,6 @@ class ctrl_GUI:
             cycle_small_pic_text = self.cycle(self.scripted_small_pic_text)
         else:
             cycle_small_pic_text = None
-        
-        if button_1_isChecked:
-            if len(self.scripted_button_1_title) == 0:
-                msg_box.warning("腳本錯誤","按鈕一標題的腳本沒有資料\n若不須開啟按鈕一\n請不要勾選「開啟按鈕一」")
-                return
-            else:
-                scripted_button_1_title = self.scripted_button_1_title
-            if len(self.scripted_button_1_url) == 0:
-                msg_box.warning("腳本錯誤","按鈕一連結的腳本沒有資料\n若不須開啟按鈕一\n請不要勾選「開啟按鈕一」")
-                return
-            else:
-                scripted_button_1_url = self.scripted_button_1_url
-            button_1 = self.button_1_cycle(scripted_button_1_title,scripted_button_1_url)
-        else:
-            scripted_button_1_title = None
-            scripted_button_1_url = None
-            button_1_list_pos = None
-
-        QtTest.QTest.qWait(10)
-        if button_2_isChecked:
-            if len(self.scripted_button_2_title) == 0:
-                msg_box.warning("腳本錯誤","按鈕二標題的腳本沒有資料\n若不須開啟按鈕二\n請不要勾選「開啟按鈕二」")
-                return
-            else:
-                scripted_button_2_title = self.scripted_button_2_title
-            if len(self.scripted_button_2_url) == 0:
-                msg_box.warning("腳本錯誤","按鈕二連結的腳本沒有資料\n若不須開啟按鈕二\n請不要勾選「開啟按鈕二」")
-                return
-            else:
-                scripted_button_2_url = self.scripted_button_2_url
-            button_2 = self.button_2_cycle(scripted_button_2_title,scripted_button_2_url)
-        else:
-            scripted_button_2_title = None
-            scripted_button_2_url = None
-            button_2_list_pos = None
 
         set_act_times = 0
         try:
@@ -298,9 +318,13 @@ class ctrl_GUI:
                 if button_1_isChecked:
                     button_1_list_pos = next(button_1)
                     buttons.append({"label": f"{scripted_button_1_title[button_1_list_pos[0]]}", "url": f"{scripted_button_1_url[button_1_list_pos[1]]}"})
-                if button_2_isChecked:
+                else:
+                    button_1_list_pos = None
+                if  button_2_isChecked:
                     button_2_list_pos = next(button_2)
                     buttons.append({"label": f"{scripted_button_2_title[button_2_list_pos[0]]}", "url": f"{scripted_button_2_url[button_2_list_pos[1]]}"})
+                else:
+                    button_2_list_pos = None
                 if len(buttons) == 0:
                     buttons = None
                 self.app.update(state=stat,details=detail,large_image=pic,
@@ -308,31 +332,35 @@ class ctrl_GUI:
                     instance=True,start=start_time_stamp,end=end_time_stamp,buttons=buttons)
                 try:
                     if set_ui_lable_thread.is_alive():
-                        pass
-                    else:
-                        set_ui_lable_thread  = Thread(target = self.set_script_status_UI_lable,daemon=True,args=[stat,detail,pic,pic_text,small_pic,small_pic_text,scripted_button_1_title,scripted_button_1_url,button_1_list_pos,scripted_button_2_title,scripted_button_2_url,button_2_list_pos])
-                        set_ui_lable_thread.run()
-                except:
-                    set_ui_lable_thread  = Thread(target = self.set_script_status_UI_lable,daemon=True,args=[stat,detail,pic,pic_text,small_pic,small_pic_text,scripted_button_1_title,scripted_button_1_url,button_1_list_pos,scripted_button_2_title,scripted_button_2_url,button_2_list_pos])
-                    set_ui_lable_thread.run()
+                        set_ui_lable_thread.join()
+                except:pass
+                set_ui_lable_thread  = Thread(target = self.set_script_status_UI_lable,daemon=True,args=[stat,detail,pic,pic_text,small_pic,small_pic_text,scripted_button_1_title,scripted_button_1_url,button_1_list_pos,scripted_button_2_title,scripted_button_2_url,button_2_list_pos])
+                set_ui_lable_thread.run()
+                
                 while self.script_stat_activate:
                     cur_time = int(QtCore.QDateTime.currentDateTime().toPyDateTime().timestamp())
                     elapsed_time = cur_time - start_time
                     if elapsed_time >= change_time + 1:
                         set_act_times += 1
-                        print(f"waiting:{elapsed_time},set act times:{set_act_times},change time:{change_time}  ", end='\r')
                         start_time += change_time
                         break
                     else:
-                        print(f"waiting:{elapsed_time},set act times:{set_act_times},change time:{change_time}  ", end='\r')
-                        QtTest.QTest.qWait(100)
+                        if not self.istray:
+                            window = 0
+                            for tl in QtWidgets.QApplication.topLevelWidgets():
+                                if not tl.isHidden():
+                                    window += 1
+                            if window == 0:
+                                self.script_stat_activate = False
+                                app.quit()
+                                self.app.close()
+                                return
+                        QtTest.QTest.qWait(50)
+                        self.statusBar.showMessage(f"腳本模式(下次狀態更新:{change_time - elapsed_time}，已更換腳本次數:{set_act_times}，每{change_time}秒更新一次)")
+                        QtTest.QTest.qWait(50)
                 else:
-                    print(f"set new presence:{elapsed_time}")
                     return
-                
-        except Exception as e:
-            print("錯誤")
-            msg_box.warning("錯誤", e)
+        except:return
 
     def cycle(self,my_list:list):
         start_at = 0
@@ -375,10 +403,9 @@ class ctrl_GUI:
                 self.cur_button_2.setText(f"{button_2_title[button_2_pos[0]]}({button_2_url[button_2_pos[1]]})")
             else:
                 self.cur_button_2.setText(f"按鈕二未啟動")
-        return
 
     def set_new_normal_state(self):
-        print("set_new_normal_state")
+        log.info("set_new_normal_state")
         self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態套用中..."))
         stat = self.status_entry.text() if len(self.status_entry.text()) else None
         detail = self.detail_entry.text() if len(self.detail_entry.text()) else None
@@ -386,7 +413,6 @@ class ctrl_GUI:
         pic_text = self.bigPicture_Entry.text() if len(self.bigPicture_Entry.text()) else None
         small_pic_text = self.smallPicture_Entry.text() if len(self.smallPicture_Entry.text()) else None
         small_pic = self.smallPicture_name_comboBox.currentText() if len(self.smallPicture_name_comboBox.currentText()) else None
-            
         buttons = []
         if self.button_activate_checkBox_1.isChecked():
             bt1_title = self.button_title_Entry_1.text()
@@ -397,7 +423,6 @@ class ctrl_GUI:
                 return
             buttons.append({"label": f"{bt1_title}", "url": f"{bt1_url}"})
             self.cur_button_1.setText(f"{bt1_title}({bt1_url})")
-
         if self.button_activate_checkBox_2.isChecked():
             bt2_title = self.button_title_Entry_2.text()
             bt2_url = self.button_url_Entry_2.text()
@@ -418,11 +443,13 @@ class ctrl_GUI:
             time_stamp = None
             time_set = False
             time_mode = None
-        print(time_stamp)
+        log.info(str(time_stamp))
         try:
             self.set_act(stat,detail,pic,pic_text,small_pic,small_pic_text,time_set,time_mode,time_stamp,buttons)
+            if not self.ctrl_GUI.isHidden():
+                self.statusBar.showMessage("普通模式")
         except Exception as e:
-            print("錯誤")
+            log.info("錯誤")
             msg_box.warning("錯誤", e)
         
         self.cur_status.setText(stat)
@@ -432,7 +459,7 @@ class ctrl_GUI:
         return
 
     def overwrite_user_state(self):
-        print("overwrite user state changes...")
+        log.info("overwrite user state changes...")
         self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:正在覆蓋新的狀態設定檔..."))
         if self.script_enable_checkBox.isChecked():
             detail = self.detail
@@ -486,10 +513,11 @@ class ctrl_GUI:
         with open(f'./data/{file_title}.json', "w", encoding="UTF-8") as json_file:
             json_file.write(json_object)
         json_file.close()
+        QtTest.QTest.qWait(100)
         self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:已儲存新的狀態設定檔"))
         
     def add_picture(self):
-        print("add_picture")
+        log.info("add_picture")
         raw_picture_list = loads(requests.get(f"https://discordapp.com/api/oauth2/applications/{self.app_id}/assets").text)
         picture_list = []
         for i in raw_picture_list:
@@ -504,14 +532,14 @@ class ctrl_GUI:
     def setupUi(self, ctrl_GUI):
         ctrl_GUI.setObjectName("ctrl_GUI")
         ctrl_GUI.setWindowModality(QtCore.Qt.NonModal)
-        ctrl_GUI.resize(1000, 380)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        ctrl_GUI.resize(1000, 400)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(ctrl_GUI.sizePolicy().hasHeightForWidth())
         ctrl_GUI.setSizePolicy(sizePolicy)
-        ctrl_GUI.setMinimumSize(QtCore.QSize(1000, 380))
-        ctrl_GUI.setMaximumSize(QtCore.QSize(1000, 405))
+        ctrl_GUI.setMinimumSize(QtCore.QSize(1000, 400))
+        ctrl_GUI.setMaximumSize(QtCore.QSize(1000, 400))
         ctrl_GUI.setSizeIncrement(QtCore.QSize(1, 1))
         font = QtGui.QFont()
         font.setFamily("SF Pro Display")
@@ -519,7 +547,6 @@ class ctrl_GUI:
         ctrl_GUI.setFont(font)
         ctrl_GUI.setMouseTracking(True)
         ctrl_GUI.setFocusPolicy(QtCore.Qt.StrongFocus)
-        #update UI from here
         ctrl_GUI.setWindowIcon(icon)
         ctrl_GUI.setAutoFillBackground(True)
         ctrl_GUI.setStyleSheet("")
@@ -527,19 +554,30 @@ class ctrl_GUI:
         ctrl_GUI.setDocumentMode(False)
         ctrl_GUI.setTabShape(QtWidgets.QTabWidget.Rounded)
         self.centralwidget = QtWidgets.QWidget(ctrl_GUI)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
+        self.centralwidget.setSizePolicy(sizePolicy)
+        self.centralwidget.setMinimumSize(QtCore.QSize(1000, 370))
+        self.centralwidget.setMaximumSize(QtCore.QSize(1000, 370))
         self.centralwidget.setAutoFillBackground(False)
         self.centralwidget.setStyleSheet("")
         self.centralwidget.setObjectName("centralwidget")
-        self.gridLayoutWidget = QtWidgets.QWidget(self.centralwidget)
-        self.gridLayoutWidget.setGeometry(QtCore.QRect(0, 0, 1001, 341))
-        self.gridLayoutWidget.setObjectName("gridLayoutWidget")
-        self.main_status_grid = QtWidgets.QGridLayout(self.gridLayoutWidget)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setContentsMargins(-1, -1, -1, 0)
+        self.verticalLayout.setSpacing(3)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.main_status_grid = QtWidgets.QGridLayout()
         self.main_status_grid.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
         self.main_status_grid.setContentsMargins(15, 15, 20, 10)
         self.main_status_grid.setHorizontalSpacing(15)
         self.main_status_grid.setVerticalSpacing(20)
         self.main_status_grid.setObjectName("main_status_grid")
-        self.cur_status_title_2 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_status_title_2 = QtWidgets.QLabel(self.centralwidget)
         self.cur_status_title_2.setMaximumSize(QtCore.QSize(16777215, 50))
         self.cur_status_title_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.cur_status_title_2.setObjectName("cur_status_title_2")
@@ -549,7 +587,7 @@ class ctrl_GUI:
         self.status_setting_grid.setHorizontalSpacing(10)
         self.status_setting_grid.setVerticalSpacing(8)
         self.status_setting_grid.setObjectName("status_setting_grid")
-        self.status_lable = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.status_lable = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -560,7 +598,7 @@ class ctrl_GUI:
         self.status_lable.setAlignment(QtCore.Qt.AlignCenter)
         self.status_lable.setObjectName("status_lable")
         self.status_setting_grid.addWidget(self.status_lable, 0, 2, 1, 1)
-        self.detail_lable = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.detail_lable = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -578,7 +616,7 @@ class ctrl_GUI:
         self.detail_lable.setAlignment(QtCore.Qt.AlignCenter)
         self.detail_lable.setObjectName("detail_lable")
         self.status_setting_grid.addWidget(self.detail_lable, 0, 0, 1, 1)
-        self.detail_entry = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.detail_entry = QtWidgets.QLineEdit(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -593,7 +631,7 @@ class ctrl_GUI:
         self.detail_entry.setClearButtonEnabled(False)
         self.detail_entry.setObjectName("detail_entry")
         self.status_setting_grid.addWidget(self.detail_entry, 0, 1, 1, 1)
-        self.status_entry = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.status_entry = QtWidgets.QLineEdit(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -604,15 +642,15 @@ class ctrl_GUI:
         self.status_entry.setObjectName("status_entry")
         self.status_setting_grid.addWidget(self.status_entry, 0, 3, 1, 1)
         self.main_status_grid.addLayout(self.status_setting_grid, 1, 1, 1, 1)
-        self.main_picture_setting_title = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.main_picture_setting_title = QtWidgets.QLabel(self.centralwidget)
         self.main_picture_setting_title.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.main_picture_setting_title.setObjectName("main_picture_setting_title")
         self.main_status_grid.addWidget(self.main_picture_setting_title, 2, 0, 1, 1)
-        self.small_picture_setting_title = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.small_picture_setting_title = QtWidgets.QLabel(self.centralwidget)
         self.small_picture_setting_title.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.small_picture_setting_title.setObjectName("small_picture_setting_title")
         self.main_status_grid.addWidget(self.small_picture_setting_title, 3, 0, 1, 1)
-        self.cur_user_title_2 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_user_title_2 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -627,7 +665,7 @@ class ctrl_GUI:
         self.main_picture_setting_grid.setContentsMargins(4, 0, -1, -1)
         self.main_picture_setting_grid.setHorizontalSpacing(10)
         self.main_picture_setting_grid.setObjectName("main_picture_setting_grid")
-        self.bigPicture_name_lable = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.bigPicture_name_lable = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -637,7 +675,7 @@ class ctrl_GUI:
         self.bigPicture_name_lable.setMaximumSize(QtCore.QSize(65, 24))
         self.bigPicture_name_lable.setObjectName("bigPicture_name_lable")
         self.main_picture_setting_grid.addWidget(self.bigPicture_name_lable, 0, 2, 1, 1)
-        self.bigPicture_Entry = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.bigPicture_Entry = QtWidgets.QLineEdit(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -648,7 +686,7 @@ class ctrl_GUI:
         self.bigPicture_Entry.setClearButtonEnabled(False)
         self.bigPicture_Entry.setObjectName("bigPicture_Entry")
         self.main_picture_setting_grid.addWidget(self.bigPicture_Entry, 0, 1, 1, 1)
-        self.bigPicture_lable = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.bigPicture_lable = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -658,7 +696,7 @@ class ctrl_GUI:
         self.bigPicture_lable.setMaximumSize(QtCore.QSize(65, 24))
         self.bigPicture_lable.setObjectName("bigPicture_lable")
         self.main_picture_setting_grid.addWidget(self.bigPicture_lable, 0, 0, 1, 1)
-        self.bigPicture_name_comboBox = QtWidgets.QComboBox(self.gridLayoutWidget)
+        self.bigPicture_name_comboBox = QtWidgets.QComboBox(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -673,7 +711,7 @@ class ctrl_GUI:
         self.smallPicture_setting_grid.setContentsMargins(4, -1, -1, -1)
         self.smallPicture_setting_grid.setHorizontalSpacing(10)
         self.smallPicture_setting_grid.setObjectName("smallPicture_setting_grid")
-        self.smallPicture_name_comboBox = QtWidgets.QComboBox(self.gridLayoutWidget)
+        self.smallPicture_name_comboBox = QtWidgets.QComboBox(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -683,7 +721,7 @@ class ctrl_GUI:
         self.smallPicture_name_comboBox.setMaximumSize(QtCore.QSize(183, 24))
         self.smallPicture_name_comboBox.setObjectName("smallPicture_name_comboBox")
         self.smallPicture_setting_grid.addWidget(self.smallPicture_name_comboBox, 0, 3, 1, 1)
-        self.smallPicture_Entry = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.smallPicture_Entry = QtWidgets.QLineEdit(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -694,7 +732,7 @@ class ctrl_GUI:
         self.smallPicture_Entry.setClearButtonEnabled(False)
         self.smallPicture_Entry.setObjectName("smallPicture_Entry")
         self.smallPicture_setting_grid.addWidget(self.smallPicture_Entry, 0, 1, 1, 1)
-        self.smallPicture_lable = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.smallPicture_lable = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -704,7 +742,7 @@ class ctrl_GUI:
         self.smallPicture_lable.setMaximumSize(QtCore.QSize(65, 24))
         self.smallPicture_lable.setObjectName("smallPicture_lable")
         self.smallPicture_setting_grid.addWidget(self.smallPicture_lable, 0, 0, 1, 1)
-        self.smallPicture_name_lable = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.smallPicture_name_lable = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -715,11 +753,11 @@ class ctrl_GUI:
         self.smallPicture_name_lable.setObjectName("smallPicture_name_lable")
         self.smallPicture_setting_grid.addWidget(self.smallPicture_name_lable, 0, 2, 1, 1)
         self.main_status_grid.addLayout(self.smallPicture_setting_grid, 3, 1, 1, 1)
-        self.button_setting_title_1 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.button_setting_title_1 = QtWidgets.QLabel(self.centralwidget)
         self.button_setting_title_1.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.button_setting_title_1.setObjectName("button_setting_title_1")
         self.main_status_grid.addWidget(self.button_setting_title_1, 4, 0, 1, 1)
-        self.button_setting_title_2 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.button_setting_title_2 = QtWidgets.QLabel(self.centralwidget)
         self.button_setting_title_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.button_setting_title_2.setObjectName("button_setting_title_2")
         self.main_status_grid.addWidget(self.button_setting_title_2, 5, 0, 1, 1)
@@ -727,7 +765,7 @@ class ctrl_GUI:
         self.horizontalLayout_5.setContentsMargins(-1, 0, 0, -1)
         self.horizontalLayout_5.setSpacing(10)
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
-        self.cur_user = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_user = QtWidgets.QLabel(self.centralwidget)
         self.cur_user.setEnabled(True)
         self.cur_user.setMaximumSize(QtCore.QSize(376, 30))
         font = QtGui.QFont()
@@ -735,7 +773,7 @@ class ctrl_GUI:
         self.cur_user.setFont(font)
         self.cur_user.setObjectName("cur_user")
         self.horizontalLayout_5.addWidget(self.cur_user)
-        self.reload_file_button = QtWidgets.QPushButton(self.gridLayoutWidget)
+        self.reload_file_button = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -745,7 +783,7 @@ class ctrl_GUI:
         self.reload_file_button.setMaximumSize(QtCore.QSize(80, 26))
         self.reload_file_button.setObjectName("reload_file_button")
         self.horizontalLayout_5.addWidget(self.reload_file_button)
-        self.open_script_setting_Button = QtWidgets.QPushButton(self.gridLayoutWidget)
+        self.open_script_setting_Button = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -755,7 +793,7 @@ class ctrl_GUI:
         self.open_script_setting_Button.setMaximumSize(QtCore.QSize(80, 26))
         self.open_script_setting_Button.setObjectName("open_script_setting_Button")
         self.horizontalLayout_5.addWidget(self.open_script_setting_Button)
-        self.go_to_dev_web_button = QtWidgets.QPushButton(self.gridLayoutWidget)
+        self.go_to_dev_web_button = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -782,7 +820,7 @@ class ctrl_GUI:
         self.button_1_setting_grid_2.setContentsMargins(4, -1, -1, -1)
         self.button_1_setting_grid_2.setHorizontalSpacing(10)
         self.button_1_setting_grid_2.setObjectName("button_1_setting_grid_2")
-        self.button_title_Entry_1 = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.button_title_Entry_1 = QtWidgets.QLineEdit(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -793,7 +831,7 @@ class ctrl_GUI:
         self.button_title_Entry_1.setClearButtonEnabled(False)
         self.button_title_Entry_1.setObjectName("button_title_Entry_1")
         self.button_1_setting_grid_2.addWidget(self.button_title_Entry_1, 0, 1, 1, 1)
-        self.button_url_lable_1 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.button_url_lable_1 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -803,7 +841,7 @@ class ctrl_GUI:
         self.button_url_lable_1.setMaximumSize(QtCore.QSize(65, 24))
         self.button_url_lable_1.setObjectName("button_url_lable_1")
         self.button_1_setting_grid_2.addWidget(self.button_url_lable_1, 0, 2, 1, 1)
-        self.button_title_lable_1 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.button_title_lable_1 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -813,10 +851,10 @@ class ctrl_GUI:
         self.button_title_lable_1.setMaximumSize(QtCore.QSize(65, 24))
         self.button_title_lable_1.setObjectName("button_title_lable_1")
         self.button_1_setting_grid_2.addWidget(self.button_title_lable_1, 0, 0, 1, 1)
-        self.button_activate_checkBox_1 = QtWidgets.QCheckBox(self.gridLayoutWidget)
+        self.button_activate_checkBox_1 = QtWidgets.QCheckBox(self.centralwidget)
         self.button_activate_checkBox_1.setObjectName("button_activate_checkBox_1")
         self.button_1_setting_grid_2.addWidget(self.button_activate_checkBox_1, 0, 4, 1, 1)
-        self.button_url_Entry_1 = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.button_url_Entry_1 = QtWidgets.QLineEdit(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -834,7 +872,7 @@ class ctrl_GUI:
         self.button_2_setting_grid_3.setContentsMargins(4, -1, -1, -1)
         self.button_2_setting_grid_3.setHorizontalSpacing(10)
         self.button_2_setting_grid_3.setObjectName("button_2_setting_grid_3")
-        self.button_title_lable_2 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.button_title_lable_2 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -844,7 +882,7 @@ class ctrl_GUI:
         self.button_title_lable_2.setMaximumSize(QtCore.QSize(65, 24))
         self.button_title_lable_2.setObjectName("button_title_lable_2")
         self.button_2_setting_grid_3.addWidget(self.button_title_lable_2, 0, 0, 1, 1)
-        self.button_title_Entry_2 = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.button_title_Entry_2 = QtWidgets.QLineEdit(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -855,7 +893,7 @@ class ctrl_GUI:
         self.button_title_Entry_2.setClearButtonEnabled(False)
         self.button_title_Entry_2.setObjectName("button_title_Entry_2")
         self.button_2_setting_grid_3.addWidget(self.button_title_Entry_2, 0, 1, 1, 1)
-        self.button_url_lable_2 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.button_url_lable_2 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -865,10 +903,10 @@ class ctrl_GUI:
         self.button_url_lable_2.setMaximumSize(QtCore.QSize(65, 24))
         self.button_url_lable_2.setObjectName("button_url_lable_2")
         self.button_2_setting_grid_3.addWidget(self.button_url_lable_2, 0, 2, 1, 1)
-        self.button_activate_checkBox_2 = QtWidgets.QCheckBox(self.gridLayoutWidget)
+        self.button_activate_checkBox_2 = QtWidgets.QCheckBox(self.centralwidget)
         self.button_activate_checkBox_2.setObjectName("button_activate_checkBox_2")
         self.button_2_setting_grid_3.addWidget(self.button_activate_checkBox_2, 0, 4, 1, 1)
-        self.button_url_Entry_2 = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.button_url_Entry_2 = QtWidgets.QLineEdit(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -882,7 +920,7 @@ class ctrl_GUI:
         self.button_url_Entry_2.setObjectName("button_url_Entry_2")
         self.button_2_setting_grid_3.addWidget(self.button_url_Entry_2, 0, 3, 1, 1)
         self.main_status_grid.addLayout(self.button_2_setting_grid_3, 5, 1, 1, 1)
-        self.time_setting_title_3 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.time_setting_title_3 = QtWidgets.QLabel(self.centralwidget)
         self.time_setting_title_3.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.time_setting_title_3.setObjectName("time_setting_title_3")
         self.main_status_grid.addWidget(self.time_setting_title_3, 6, 0, 1, 1)
@@ -891,7 +929,7 @@ class ctrl_GUI:
         self.time_setting_grid_2.setHorizontalSpacing(10)
         self.time_setting_grid_2.setVerticalSpacing(8)
         self.time_setting_grid_2.setObjectName("time_setting_grid_2")
-        self.open_time_counting_checkBox = QtWidgets.QCheckBox(self.gridLayoutWidget)
+        self.open_time_counting_checkBox = QtWidgets.QCheckBox(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -904,7 +942,7 @@ class ctrl_GUI:
         self.open_time_counting_checkBox.setFont(font)
         self.open_time_counting_checkBox.setObjectName("open_time_counting_checkBox")
         self.time_setting_grid_2.addWidget(self.open_time_counting_checkBox, 0, 5, 1, 1)
-        self.time_setting = QtWidgets.QDateTimeEdit(self.gridLayoutWidget)
+        self.time_setting = QtWidgets.QDateTimeEdit(self.centralwidget)
         self.time_setting.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
@@ -918,7 +956,7 @@ class ctrl_GUI:
         self.time_setting.setCalendarPopup(True)
         self.time_setting.setObjectName("time_setting")
         self.time_setting_grid_2.addWidget(self.time_setting, 0, 3, 1, 1)
-        self.time_mode = QtWidgets.QComboBox(self.gridLayoutWidget)
+        self.time_mode = QtWidgets.QComboBox(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -931,7 +969,7 @@ class ctrl_GUI:
         self.time_mode.addItem("")
         self.time_mode.addItem("")
         self.time_setting_grid_2.addWidget(self.time_mode, 0, 0, 1, 1)
-        self.time_reset_button = QtWidgets.QPushButton(self.gridLayoutWidget)
+        self.time_reset_button = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -944,7 +982,7 @@ class ctrl_GUI:
         self.main_status_grid.addLayout(self.time_setting_grid_2, 6, 1, 1, 1)
         self.RPC_state_1 = QtWidgets.QHBoxLayout()
         self.RPC_state_1.setObjectName("RPC_state_1")
-        self.cur_detail_label = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_detail_label = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -955,7 +993,7 @@ class ctrl_GUI:
         self.cur_detail_label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.cur_detail_label.setObjectName("cur_detail_label")
         self.RPC_state_1.addWidget(self.cur_detail_label)
-        self.cur_detail = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_detail = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -968,7 +1006,7 @@ class ctrl_GUI:
         self.cur_detail.setObjectName("cur_detail")
         self.RPC_state_1.addWidget(self.cur_detail)
         self.main_status_grid.addLayout(self.RPC_state_1, 1, 2, 1, 1)
-        self.cur_status_grid_title = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_status_grid_title = QtWidgets.QLabel(self.centralwidget)
         self.cur_status_grid_title.setEnabled(True)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
@@ -984,7 +1022,7 @@ class ctrl_GUI:
         self.main_status_grid.addWidget(self.cur_status_grid_title, 0, 2, 1, 1)
         self.RPC_state_2 = QtWidgets.QHBoxLayout()
         self.RPC_state_2.setObjectName("RPC_state_2")
-        self.cur_status_label = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_status_label = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -995,7 +1033,7 @@ class ctrl_GUI:
         self.cur_status_label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.cur_status_label.setObjectName("cur_status_label")
         self.RPC_state_2.addWidget(self.cur_status_label)
-        self.cur_status = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_status = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1008,7 +1046,7 @@ class ctrl_GUI:
         self.main_status_grid.addLayout(self.RPC_state_2, 2, 2, 1, 1)
         self.RPC_state_3 = QtWidgets.QHBoxLayout()
         self.RPC_state_3.setObjectName("RPC_state_3")
-        self.cur_BigPicture_lable = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_BigPicture_lable = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1019,7 +1057,7 @@ class ctrl_GUI:
         self.cur_BigPicture_lable.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.cur_BigPicture_lable.setObjectName("cur_BigPicture_lable")
         self.RPC_state_3.addWidget(self.cur_BigPicture_lable)
-        self.cur_BigPicture = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_BigPicture = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1033,7 +1071,7 @@ class ctrl_GUI:
         self.main_status_grid.addLayout(self.RPC_state_3, 3, 2, 1, 1)
         self.RPC_state_4 = QtWidgets.QHBoxLayout()
         self.RPC_state_4.setObjectName("RPC_state_4")
-        self.cur_SmallPicture_lable = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_SmallPicture_lable = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1044,7 +1082,7 @@ class ctrl_GUI:
         self.cur_SmallPicture_lable.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.cur_SmallPicture_lable.setObjectName("cur_SmallPicture_lable")
         self.RPC_state_4.addWidget(self.cur_SmallPicture_lable)
-        self.cur_SmallPicture = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_SmallPicture = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1059,7 +1097,7 @@ class ctrl_GUI:
         self.main_status_grid.addLayout(self.RPC_state_4, 4, 2, 1, 1)
         self.RPC_state_5 = QtWidgets.QHBoxLayout()
         self.RPC_state_5.setObjectName("RPC_state_5")
-        self.cur_button_lable_1 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_button_lable_1 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1070,7 +1108,7 @@ class ctrl_GUI:
         self.cur_button_lable_1.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.cur_button_lable_1.setObjectName("cur_button_lable_1")
         self.RPC_state_5.addWidget(self.cur_button_lable_1)
-        self.cur_button_1 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_button_1 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1085,7 +1123,7 @@ class ctrl_GUI:
         self.main_status_grid.addLayout(self.RPC_state_5, 5, 2, 1, 1)
         self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
-        self.cur_button_lable_2 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_button_lable_2 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1096,7 +1134,7 @@ class ctrl_GUI:
         self.cur_button_lable_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.cur_button_lable_2.setObjectName("cur_button_lable_2")
         self.horizontalLayout_8.addWidget(self.cur_button_lable_2)
-        self.cur_button_2 = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.cur_button_2 = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1109,52 +1147,60 @@ class ctrl_GUI:
         self.cur_button_2.setObjectName("cur_button_2")
         self.horizontalLayout_8.addWidget(self.cur_button_2)
         self.main_status_grid.addLayout(self.horizontalLayout_8, 6, 2, 1, 1)
-        self.gridLayoutWidget_2 = QtWidgets.QWidget(self.centralwidget)
-        self.gridLayoutWidget_2.setGeometry(QtCore.QRect(0, 340, 1001, 44))
-        self.gridLayoutWidget_2.setObjectName("gridLayoutWidget_2")
-        self.activate_button_grid = QtWidgets.QGridLayout(self.gridLayoutWidget_2)
-        self.activate_button_grid.setContentsMargins(15, 0, 15, 15)
+        self.verticalLayout.addLayout(self.main_status_grid)
+        self.activate_button_grid = QtWidgets.QGridLayout()
+        self.activate_button_grid.setContentsMargins(5, 0, 5, 0)
         self.activate_button_grid.setObjectName("activate_button_grid")
-        self.save_data_button = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.save_data_button = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.save_data_button.sizePolicy().hasHeightForWidth())
         self.save_data_button.setSizePolicy(sizePolicy)
-        self.save_data_button.setMinimumSize(QtCore.QSize(0, 28))
-        self.save_data_button.setMaximumSize(QtCore.QSize(150, 16777215))
+        self.save_data_button.setMinimumSize(QtCore.QSize(0, 30))
+        self.save_data_button.setMaximumSize(QtCore.QSize(155, 30))
         self.save_data_button.setSizeIncrement(QtCore.QSize(0, 28))
         self.save_data_button.setDefault(False)
         self.save_data_button.setObjectName("save_data_button")
         self.activate_button_grid.addWidget(self.save_data_button, 0, 2, 1, 1)
-        self.close_window_button = QtWidgets.QPushButton(self.gridLayoutWidget_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.close_window_button.sizePolicy().hasHeightForWidth())
-        self.close_window_button.setSizePolicy(sizePolicy)
-        self.close_window_button.setMinimumSize(QtCore.QSize(317, 28))
-        self.close_window_button.setMaximumSize(QtCore.QSize(317, 28))
-        self.close_window_button.setObjectName("close_window_button")
-        self.activate_button_grid.addWidget(self.close_window_button, 0, 5, 1, 1)
-        self.save_data_button_2 = QtWidgets.QPushButton(self.gridLayoutWidget_2)
-        self.save_data_button_2.setMinimumSize(QtCore.QSize(0, 28))
-        self.save_data_button_2.setMaximumSize(QtCore.QSize(150, 28))
-        self.save_data_button_2.setSizeIncrement(QtCore.QSize(0, 0))
-        self.save_data_button_2.setDefault(False)
-        self.save_data_button_2.setObjectName("save_data_button_2")
-        self.activate_button_grid.addWidget(self.save_data_button_2, 0, 0, 1, 1)
-        self.activate_status_button = QtWidgets.QPushButton(self.gridLayoutWidget_2)
+        self.activate_status_button = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.activate_status_button.sizePolicy().hasHeightForWidth())
         self.activate_status_button.setSizePolicy(sizePolicy)
-        self.activate_status_button.setMinimumSize(QtCore.QSize(315, 28))
-        self.activate_status_button.setMaximumSize(QtCore.QSize(315, 28))
+        self.activate_status_button.setMinimumSize(QtCore.QSize(310, 30))
+        self.activate_status_button.setMaximumSize(QtCore.QSize(310, 30))
         self.activate_status_button.setObjectName("activate_status_button")
         self.activate_button_grid.addWidget(self.activate_status_button, 0, 3, 1, 1)
+        self.close_window_button = QtWidgets.QPushButton(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.close_window_button.sizePolicy().hasHeightForWidth())
+        self.close_window_button.setSizePolicy(sizePolicy)
+        self.close_window_button.setMinimumSize(QtCore.QSize(325, 30))
+        self.close_window_button.setMaximumSize(QtCore.QSize(325, 30))
+        self.close_window_button.setObjectName("close_window_button")
+        self.activate_button_grid.addWidget(self.close_window_button, 0, 5, 1, 1)
+        self.save_data_button_2 = QtWidgets.QPushButton(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.save_data_button_2.sizePolicy().hasHeightForWidth())
+        self.save_data_button_2.setSizePolicy(sizePolicy)
+        self.save_data_button_2.setMinimumSize(QtCore.QSize(0, 30))
+        self.save_data_button_2.setMaximumSize(QtCore.QSize(160, 30))
+        self.save_data_button_2.setSizeIncrement(QtCore.QSize(0, 0))
+        self.save_data_button_2.setDefault(False)
+        self.save_data_button_2.setObjectName("save_data_button_2")
+        self.activate_button_grid.addWidget(self.save_data_button_2, 0, 0, 1, 1)
+        self.verticalLayout.addLayout(self.activate_button_grid)
+        self.verticalLayout_2.addLayout(self.verticalLayout)
         ctrl_GUI.setCentralWidget(self.centralwidget)
+        self.statusBar = QtWidgets.QStatusBar(ctrl_GUI)
+        self.statusBar.setObjectName("statusBar")
+        ctrl_GUI.setStatusBar(self.statusBar)
         self.white_mode = QtWidgets.QAction(ctrl_GUI)
         self.white_mode.setCheckable(True)
         self.white_mode.setObjectName("white_mode")
@@ -1170,7 +1216,7 @@ class ctrl_GUI:
     
     def retranslateUi(self, ctrl_GUI):
         _translate = QtCore.QCoreApplication.translate
-        ctrl_GUI.setWindowTitle(_translate("ctrl_GUI", "discord狀態修改器"))
+        ctrl_GUI.setWindowTitle(_translate("ctrl_GUI", version))
         self.status_lable.setText(_translate("ctrl_GUI", "副標"))
         self.detail_lable.setText(_translate("ctrl_GUI", "主標"))
         self.detail_entry.setPlaceholderText(_translate("ctrl_GUI", "請輸入狀態標題"))
@@ -1294,7 +1340,6 @@ class ctrl_GUI:
         self.activate_status_button.clicked.connect(self.set_new_state)
         self.close_window_button.clicked.connect(self.window_minimum)
         self.go_to_dev_web_button.clicked.connect(self.open_discord_dev)
-        ctrl_GUI.destroyed.connect(self.close)
         self.time_mode.currentTextChanged.connect(self.on_Timemode_changed)
         self.time_reset_button.clicked.connect(self.reset_QDateTime)
         self.button_activate_checkBox_1.stateChanged.connect(self.button_activate_checkBox_1_changed)
@@ -1302,22 +1347,27 @@ class ctrl_GUI:
         self.open_time_counting_checkBox.stateChanged.connect(self.time_activate_checkBox_changed)
         self.reload_file_button.clicked.connect(self.main_window_reload)
         self.open_script_setting_Button.clicked.connect(self.show_script_setting_window)
+        QShortcut(QtGui.QKeySequence("Ctrl+S"), ctrl_GUI, activated=self.overwrite_user_state)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), ctrl_GUI, activated=log.logging_ui.show)
+        QShortcut(QtGui.QKeySequence("Ctrl+R"), ctrl_GUI, activated=self.set_new_state)
 
     def set_new_state(self):
-        self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:腳本狀態套用中..."))
+        self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態套用中..."))
         if self.script_enable_checkBox.isChecked():
             self.set_new_script_state()
             self.script_stat_activate = True
         else:
-            self.set_new_normal_state()
-            self.script_stat_activate = False
-
-    def close(self):
-        self.stop = False
-        print("window closed")
+            try:
+                while self.set_script_state_thread.is_alive():
+                    self.script_stat_activate = False
+                    self.set_script_state_thread.join()
+                else:
+                    self.set_new_normal_state()
+            except:
+                self.set_new_normal_state()
 
     def show_script_setting_window(self):
-        print("show_script_setting_window")
+        log.info("show_script_setting_window")
         title = self.script_list_combobox.currentText()
         if title == "主標":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_detail))
@@ -1342,15 +1392,15 @@ class ctrl_GUI:
         cursor = self.script_textEdit.textCursor()
         cursor.movePosition(QTextCursor.End)
         self.script_textEdit.setTextCursor(cursor)
-        self.time_change_spinBox.setValue(self.temp_scripted_change_time)
+        self.time_change_spinBox.setValue(self.scripted_time)
         self.script_setting_ui.show()
 
     def main_window_reload(self):
-        print("main_window_reload")
+        log.info("main_window_reload")
         self.reload = Ui_restart_ui()
 
     def open_save_window(self):
-        print("open_save_window")
+        log.info("open_save_window")
         if self.script_enable_checkBox.isChecked():
             detail = self.detail
             stat = self.stat
@@ -1409,30 +1459,32 @@ class ctrl_GUI:
         self.cur_user.setText(file_title)
 
     def open_discord_dev(self):
-        print("open_discord_dev")
+        log.info("open_discord_dev")
         url=QUrl(f"https://discord.com/developers/applications/{self.app_id}/rich-presence/assets")
         QDesktopServices.openUrl(url)
 
     def button_activate_checkBox_1_changed(self):
-        print("button_activate_checkBox_1_changed")
+        log.info("button_activate_checkBox_1_changed")
         if self.button_activate_checkBox_1.isChecked():
-            self.button_title_Entry_1.setEnabled(True)
-            self.button_url_Entry_1.setEnabled(True)
+            if not self.script_enable_checkBox.isChecked():
+                self.button_title_Entry_1.setEnabled(True)
+                self.button_url_Entry_1.setEnabled(True)
         else:
             self.button_title_Entry_1.setEnabled(False)
             self.button_url_Entry_1.setEnabled(False)
 
     def button_activate_checkBox_2_changed(self):
-        print("button_activate_checkBox_2_changed")
+        log.info("button_activate_checkBox_2_changed")
         if self.button_activate_checkBox_2.isChecked():
-            self.button_title_Entry_2.setEnabled(True)
-            self.button_url_Entry_2.setEnabled(True)
+            if not self.script_enable_checkBox.isChecked():
+                self.button_title_Entry_2.setEnabled(True)
+                self.button_url_Entry_2.setEnabled(True)
         else:
             self.button_title_Entry_2.setEnabled(False)
             self.button_url_Entry_2.setEnabled(False)
     
     def on_Timemode_changed(self, value):
-        print("on_Timemode_changed")
+        log.info("on_Timemode_changed")
         if self.open_time_counting_checkBox.isChecked():
             if value == "從零開始":
                 self.time_setting.setEnabled(False)
@@ -1442,7 +1494,7 @@ class ctrl_GUI:
                 self.time_reset_button.setEnabled(True)
 
     def time_activate_checkBox_changed(self):
-        print("time_activate_checkBox_changed")
+        log.info("time_activate_checkBox_changed")
         if self.open_time_counting_checkBox.isChecked():
             self.time_mode.setEnabled(True)
             if self.time_mode.currentText() != "從零開始":
@@ -1457,7 +1509,7 @@ class ctrl_GUI:
             self.time_reset_button.setEnabled(False)
     
     def reset_QDateTime(self):
-        print("reset_QDateTime")
+        log.info("reset_QDateTime")
         self.time_setting.setDateTime(QtCore.QDateTime.currentDateTime())
 
     def init_script_setting_window(self):
@@ -1644,6 +1696,7 @@ class ctrl_GUI:
         self.script_enable_checkBox.stateChanged.connect(self.script_enable_checkBox_changed)
         self.script_enable_checkBox.setChecked(self.is_script)
         QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), script_setting_ui, activated=self.script_setting_ui.destroy)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), script_setting_ui, activated=log.logging_ui.show)
 
     def script_setting_ui_retranslateUi(self, script_setting_ui):
         _translate = QtCore.QCoreApplication.translate
@@ -1671,7 +1724,7 @@ class ctrl_GUI:
 
     def script_enable_checkBox_changed(self):
         if self.script_enable_checkBox.isChecked():
-            print("script mode")
+            log.info("script mode")
             use_script = False
             self.detail_entry.setText("腳本套用中")
             self.status_entry.setText("腳本套用中")
@@ -1682,7 +1735,7 @@ class ctrl_GUI:
             self.button_title_Entry_2.setText("腳本套用中")
             self.button_url_Entry_2.setText("腳本套用中")
         else:
-            print("normal mode")
+            log.info("normal mode")
             use_script = True
             self.detail_entry.setText(self.detail)
             self.status_entry.setText(self.stat)
@@ -1705,13 +1758,13 @@ class ctrl_GUI:
         return
 
     def script_textEdit_changed(self):
-        print("Script text changed")
+        log.info("Script text changed")
         script_quantity = str(len(self.script_textEdit.toPlainText().split('\n')))
         self.show_script_quantity.setText(script_quantity)
         return
 
     def save_scripts_button_clicked(self):
-        print("save_scripts_button_clicked")
+        log.info("save_scripts_button_clicked")
         temp_data = self.script_textEdit.toPlainText().split('\n')
         data = list(temp_data)
         for i in range(len(temp_data)):
@@ -1756,14 +1809,14 @@ class ctrl_GUI:
         return
         
     def script_list_combobox_changed(self,title):
-        print("script_list_combobox_changed")
+        log.info("script_list_combobox_changed")
         temp_data = self.script_textEdit.toPlainText().split('\n')
         self.show_script_quantity.setText(str(len(temp_data)))
         data = list(temp_data)
         for i in range(len(temp_data)):
             if temp_data[i] == '':
                 data.remove('')
-        print(f"上一個項目:{self.Previous_title}\n本項目:{title}\n內容:{data}")
+        log.info(f"上一個項目:{self.Previous_title}\n本項目:{title}\n內容:{data}")
         if self.Previous_title == "主標":
             self.temp_scripted_detail = data
         elif self.Previous_title == "副標":
@@ -1808,6 +1861,10 @@ class ctrl_GUI:
         QtTest.QTest.qWait(1)
         self.script_textEdit.setPlainText(temp)
         self.Previous_title = title
+        self.script_textEdit.setFocus()
+        cursor = self.script_textEdit.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        self.script_textEdit.setTextCursor(cursor)
         return
     
     def list_to_textEdit(self,value):
@@ -1820,7 +1877,7 @@ class ctrl_GUI:
             return
 
     def close_script_editor(self):
-        print("close_script_editor")
+        log.info("close_script_editor")
         messageBox = QMessageBox()
         messageBox.setWindowIcon(icon)
         messageBox.setWindowTitle(' Discord狀態修改器')
@@ -1832,7 +1889,7 @@ class ctrl_GUI:
         buttonN.setText('繼續編輯')
         messageBox.exec_()
         if messageBox.clickedButton() == buttonY:
-            print('yes')
+            log.info('yes')
             for tl in QtWidgets.QApplication.topLevelWidgets():
                 if tl.windowTitle() == "狀態腳本設定":
                     tl.destroy()
@@ -1852,11 +1909,11 @@ class UI_start_ui:
         sys.exit(app.exec_())
 
     def close(self):
-        print("start_ui closed")
+        log.info("start_ui closed")
         exit()
 
     def get_file_name(self):
-        print("start get_file_name")
+        log.info("start get_file_name")
         self.dir_raw_list = listdir("./data")
         self.dir_list = []
         for i in self.dir_raw_list:
@@ -1942,6 +1999,7 @@ class UI_start_ui:
         self.go_to_dev_web_button.clicked.connect(self.open_discord_dev)
         self.Enter.clicked.connect(self._init_main_ui)
         QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.comboBox, activated=self._init_main_ui)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), start_ui, activated=log.logging_ui.show)
 
     def open_discord_dev(self):
         url=QUrl("https://discord.com/developers/applications/")
@@ -1949,9 +2007,13 @@ class UI_start_ui:
 
     def _init_main_ui(self):
         global file_title
-        file_title = self.comboBox.currentText()
-        self.main_GUI = ctrl_GUI(self.dir_list)
-        self.start_ui.hide()
+        try:
+            file_title = self.comboBox.currentText()
+            self.main_GUI = ctrl_GUI(self.dir_list)
+            self.start_ui.hide()
+        except Exception as e:
+            msg_box.warning("錯誤",e)
+            return
 
 class Ui_Save_As:
     def __init__(self):
@@ -2017,20 +2079,21 @@ class Ui_Save_As:
         self.pushButton.setText(_translate("Save_As", "確定"))
         self.pushButton.clicked.connect(self.save_user_state)
         QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.lineEdit, activated=self.save_user_state)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), Save_As, activated=log.logging_ui.show)
 
     def show_window(self,dictionary):
         self.dictionary = dictionary
         self.Save_As.show()
 
     def save_user_state(self):
-        print("saving state changes...")
+        log.info("saving state changes...")
         if len(self.lineEdit.text()) == 0:
             msg_box.warning("錯誤", "檔名不能為空")
             return
         else:
             json_object = dumps(self.dictionary, indent = 3)
             save_title = self.lineEdit.text()
-            print(save_title)
+            log.info(save_title)
             with open(f'./data/{save_title}.json', "w", encoding="UTF-8") as json_file:
                 json_file.write(json_object)
             json_file.close()
@@ -2092,6 +2155,7 @@ class Ui_restart_ui(object):
         restart_ui.setWindowTitle(_translate("restart_ui", "更換確認"))
         self.yes_button.clicked.connect(self.reload)
         self.No_button.clicked.connect(self.close_window)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), restart_ui, activated=log.logging_ui.show)
 
     def reload(self):
         execlp(sys.executable, sys.executable, *sys.argv)
@@ -2105,25 +2169,54 @@ class msg_window(QWidget):
         QMessageBox.information(self,title,message)
 
     def warning(self,title:str,message):
-        print("錯誤")
+        log.info("錯誤")
         message = str(message)
         QMessageBox.warning(self,title,message)
     
+
+class Ui_logging_ui(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.logging_ui = QtWidgets.QWidget()
+        self.logging_ui.setObjectName("logging_ui")
+        self.logging_ui.resize(500, 600)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.logging_ui)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setSpacing(7)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.plainTextEdit = QtWidgets.QPlainTextEdit(self.logging_ui)
+        self.plainTextEdit.setEnabled(True)
+        self.plainTextEdit.setReadOnly(True)
+        self.plainTextEdit.setObjectName("plainTextEdit")
+        self.verticalLayout.addWidget(self.plainTextEdit)
+        self.verticalLayout_2.addLayout(self.verticalLayout)
+        QtCore.QMetaObject.connectSlotsByName(self.logging_ui)
+        self.logging_ui.move(100, 180)
+
+    def info(self,msg):
+        self.plainTextEdit.appendPlainText(msg)
+
 if __name__ == '__main__':
-    print("start discord RPC editor")
     app = QApplication(sys.argv)
     app.setStyleSheet(qdarktheme.load_stylesheet())
-    msg_box = msg_window()
-    print(sys.executable)
-    print(path.abspath(__file__))
+    log = Ui_logging_ui()
     try:
-        print(sys._MEIPASS)
         temp_file = sys._MEIPASS
         icon = QtGui.QIcon(f"{temp_file}/lib/icon.ico")
         QFontDatabase.addApplicationFont(f"{temp_file}/SF-Pro-Display-Regular.otf")
+        log.logging_ui.setWindowTitle("discord狀態修改器執行紀錄:用戶模式")
     except:
         icon = QtGui.QIcon("./lib/icon.ico")
         QFontDatabase.addApplicationFont("./lib/SF-Pro-Display-Regular.otf")
+        log.logging_ui.show()
+        log.logging_ui.setWindowTitle("discord狀態修改器執行紀錄:除錯模式")
+    log.info("start discord RPC editor")
+    msg_box = msg_window()
+    log.info(sys.executable)
+    log.info(path.abspath(__file__))
     msg_box.setWindowIcon(icon)
-    msg_box.setWindowIcon(icon)
+    log.logging_ui.setWindowIcon(icon)
+    app.setQuitOnLastWindowClosed(False)
     UI_start_ui()
