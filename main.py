@@ -165,12 +165,14 @@ class ctrl_GUI:
         self.tray.hide()
         self.ctrl_GUI.show()
         self.istray = False
+        app.setQuitOnLastWindowClosed(True)
 
     def window_minimum(self):
         log.info("window_minimum")
         self.tray.show()
-        self.ctrl_GUI.destroy()
+        self.ctrl_GUI.hide()
         self.istray = True
+        app.setQuitOnLastWindowClosed(False)
     
     def set_new_script_state(self):
         log.info("set_new_script_state")
