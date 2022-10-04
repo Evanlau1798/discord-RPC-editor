@@ -272,6 +272,9 @@
               <pointsize>9</pointsize>
              </font>
             </property>
+            <property name="statusTip">
+             <string/>
+            </property>
             <property name="placeholderText">
              <string>請輸入狀態標題</string>
             </property>

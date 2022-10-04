@@ -23,6 +23,7 @@ class ctrl_GUI:
         if len(file_title) == 0:
             msg_box.warning("錯誤", "App ID不能為空")
             return
+            
         try:
             if file_title in self.dir_list:
                 with open(f'.\data\{file_title}.json',encoding="UTF-8",mode="r") as json_file:
@@ -41,7 +42,7 @@ class ctrl_GUI:
         self.ctrl_GUI = QMainWindow()
         self.setupUi(self.ctrl_GUI)
         self.add_picture()
-        self.statusBar.showMessage("尚未啟動狀態")
+        self.statusMessage.setText("尚未啟動狀態")
         self.ctrl_GUI.show()
         self.init_script_setting_window()
         self._init_system_tray()
@@ -176,7 +177,6 @@ class ctrl_GUI:
     
     def set_new_script_state(self):
         log.info("set_new_script_state")
-        self.activate_status_button.setEnabled(False)
         self.script_stat_activate = False
 
         time_stamp = int(self.time_setting.dateTime().toPyDateTime().timestamp())
@@ -192,7 +192,7 @@ class ctrl_GUI:
                 if time_stamp > start_time:
                     msg_box.warning("錯誤", "經過時間為負數")
                     self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態設定失敗"))
-                    self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                    self.statusMessage.setText("腳本模式(已停止狀態顯示)")
                     self.activate_status_button.setEnabled(True)
                     self.app.clear()
                     return
@@ -202,7 +202,7 @@ class ctrl_GUI:
                 if time_stamp < start_time:
                     msg_box.warning("錯誤", "剩餘時間為負數")
                     self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態設定失敗"))
-                    self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                    self.statusMessage.setText("腳本模式(已停止狀態顯示)")
                     self.activate_status_button.setEnabled(True)
                     self.app.clear()
                     return
@@ -215,7 +215,7 @@ class ctrl_GUI:
         if button_1_isChecked:
             if len(self.scripted_button_1_title) == 0:
                 msg_box.warning("腳本錯誤","按鈕一標題的腳本沒有資料\n若不須開啟按鈕一\n請不要勾選「開啟按鈕一」")
-                self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                self.statusMessage.setText("腳本模式(已停止狀態顯示)")
                 self.activate_status_button.setEnabled(True)
                 self.app.clear()
                 return
@@ -223,7 +223,7 @@ class ctrl_GUI:
                 scripted_button_1_title = self.scripted_button_1_title
             if len(self.scripted_button_1_url) == 0:
                 msg_box.warning("腳本錯誤","按鈕一連結的腳本沒有資料\n若不須開啟按鈕一\n請不要勾選「開啟按鈕一」")
-                self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                self.statusMessage.setText("腳本模式(已停止狀態顯示)")
                 self.activate_status_button.setEnabled(True)
                 self.app.clear()
                 return
@@ -361,7 +361,7 @@ class ctrl_GUI:
                         break
                     else:
                         QtTest.QTest.qWait(50)
-                        self.statusBar.showMessage(f"腳本模式(下次狀態更新:{change_time - elapsed_time}，已更換腳本次數:{set_act_times}，每{change_time}秒更新一次)")
+                        self.statusMessage.setText(f"腳本模式(下次狀態更新:{change_time - elapsed_time}，已更換腳本次數:{set_act_times}，每{change_time}秒更新一次)")
                         QtTest.QTest.qWait(50)
                 else:
                     return
@@ -424,7 +424,7 @@ class ctrl_GUI:
             bt1_url = self.button_url_Entry_1.text()
             if bt1_title == ""  or bt1_url == "":
                 msg_box.warning("錯誤", "按鈕一的標題或連結網址不可為空白")
-                self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態設定失敗"))
+                self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:狀態設定失敗"))
                 return
             buttons.append({"label": f"{bt1_title}", "url": f"{bt1_url}"})
             self.cur_button_1.setText(f"{bt1_title}({bt1_url})")
@@ -463,7 +463,7 @@ class ctrl_GUI:
 
     def overwrite_user_state(self):
         log.info("overwrite user state changes...")
-        self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:正在覆蓋新的狀態設定檔..."))
+        self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:正在覆蓋新的狀態設定檔..."))
         if self.script_enable_checkBox.isChecked():
             detail = self.detail
             stat = self.stat
@@ -1213,6 +1213,9 @@ class ctrl_GUI:
         self.hide_RPC_status = QtWidgets.QAction(ctrl_GUI)
         self.hide_RPC_status.setCheckable(True)
         self.hide_RPC_status.setObjectName("hide_RPC_status")
+        self.statusMessage = QtWidgets.QLabel()
+        self.statusMessage.setText("狀態尚未啟用")
+        self.statusBar.addWidget(self.statusMessage)
 
         self.retranslateUi(ctrl_GUI)
         QtCore.QMetaObject.connectSlotsByName(ctrl_GUI)
@@ -1335,7 +1338,7 @@ class ctrl_GUI:
             self.time_setting.setEnabled(False)
             self.time_reset_button.setEnabled(False)
 
-        self.add_button_connect(ctrl_GUI)       
+        self.add_button_connect(ctrl_GUI) 
     
     def add_button_connect(self,ctrl_GUI):
         self.save_data_button_2.clicked.connect(self.open_save_window)
@@ -1350,11 +1353,13 @@ class ctrl_GUI:
         self.open_time_counting_checkBox.stateChanged.connect(self.time_activate_checkBox_changed)
         self.reload_file_button.clicked.connect(self.main_window_reload)
         self.open_script_setting_Button.clicked.connect(self.show_script_setting_window)
-        QShortcut(QtGui.QKeySequence("Ctrl+S"), ctrl_GUI, activated=self.overwrite_user_state)
-        QShortcut(QtGui.QKeySequence("Ctrl+L"), ctrl_GUI, activated=log.logging_ui.show)
-        QShortcut(QtGui.QKeySequence("Ctrl+R"), ctrl_GUI, activated=self.set_new_state)
+        QShortcut(QtGui.QKeySequence("Ctrl+S"), ctrl_GUI, activated=self.overwrite_user_state).setAutoRepeat(False)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), ctrl_GUI, activated=log.logging_ui.show).setAutoRepeat(False)
+        QShortcut(QtGui.QKeySequence("Ctrl+R"), ctrl_GUI, activated=self.set_new_state).setAutoRepeat(False)
 
     def set_new_state(self):
+        if not self.activate_status_button.isEnabled():return
+        self.activate_status_button.setEnabled(False)
         self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態套用中..."))
         if self.script_enable_checkBox.isChecked():
             self.set_new_script_state()
@@ -1364,39 +1369,49 @@ class ctrl_GUI:
                 while self.set_script_state_thread.is_alive():
                     self.script_stat_activate = False
                     self.set_script_state_thread.join()
-                else:
-                    self.set_new_normal_state()
-            except:
-                self.set_new_normal_state()
+            except:pass
+            self.set_new_normal_state()
 
     def show_script_setting_window(self):
         log.info("show_script_setting_window")
         title = self.script_list_combobox.currentText()
         if title == "主標":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_detail))
+
         elif title == "副標":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_stat))
+
         elif title == "大圖標題":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_pic_text))
+
         elif title == "大圖名稱":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_pic))
+
         elif title == "小圖標題":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_small_pic_text))
+
         elif title == "小圖名稱":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_small_pic))
+
         elif title == "按鈕一標題":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_button_1_title))
+
         elif title == "按鈕一網址":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_button_1_url))
+
         elif title == "按鈕二標題":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_button_2_title))
+
         elif title == "按鈕二網址":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_button_2_url))
+
         cursor = self.script_textEdit.textCursor()
         cursor.movePosition(QTextCursor.End)
         self.script_textEdit.setTextCursor(cursor)
         self.time_change_spinBox.setValue(self.scripted_time)
+        self.isEdit = False
         self.script_setting_ui.show()
+        self.script_textEdit.setFocus()
 
     def main_window_reload(self):
         log.info("main_window_reload")
@@ -1698,8 +1713,8 @@ class ctrl_GUI:
         self.script_textEdit.textChanged.connect(self.script_textEdit_changed)
         self.script_enable_checkBox.stateChanged.connect(self.script_enable_checkBox_changed)
         self.script_enable_checkBox.setChecked(self.is_script)
-        QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), script_setting_ui, activated=self.script_setting_ui.destroy)
-        QShortcut(QtGui.QKeySequence("Ctrl+L"), script_setting_ui, activated=log.logging_ui.show)
+        QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), script_setting_ui, activated=self.script_setting_ui.destroy).setAutoRepeat(False)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), script_setting_ui, activated=log.logging_ui.show).setAutoRepeat(False)
 
     def script_setting_ui_retranslateUi(self, script_setting_ui):
         _translate = QtCore.QCoreApplication.translate
@@ -1748,6 +1763,7 @@ class ctrl_GUI:
             self.button_url_Entry_1.setText(self.button_1_url)
             self.button_title_Entry_2.setText(self.button_2_title)
             self.button_url_Entry_2.setText(self.button_2_url)
+
         self.detail_entry.setEnabled(use_script)
         self.status_entry.setEnabled(use_script)
         self.bigPicture_Entry.setEnabled(use_script)
@@ -1764,6 +1780,7 @@ class ctrl_GUI:
         log.info("Script text changed")
         script_quantity = str(len(self.script_textEdit.toPlainText().split('\n')))
         self.show_script_quantity.setText(script_quantity)
+        self.isEdit = True
         return
 
     def save_scripts_button_clicked(self):
@@ -1776,24 +1793,34 @@ class ctrl_GUI:
         title = self.script_list_combobox.currentText()
         if title == "主標":
             self.temp_scripted_detail = data
+
         elif title == "副標":
             self.temp_scripted_stat = data
+
         elif title == "大圖標題":
             self.temp_scripted_pic_text = data
+
         elif title == "大圖名稱":
             self.temp_scripted_pic = data
+
         elif title == "小圖標題":
             self.temp_scripted_small_pic_text = data
+
         elif title == "小圖名稱":
             self.temp_scripted_small_pic = data
+
         elif title == "按鈕一標題":
             self.temp_scripted_button_1_title = data
+
         elif title == "按鈕一網址":
             self.temp_scripted_button_1_url = data
+
         elif title == "按鈕二標題":
             self.temp_scripted_button_2_title = data
+
         elif title == "按鈕二網址":
             self.temp_scripted_button_2_url = data
+
         self.scripted_detail = self.temp_scripted_detail
         self.scripted_stat = self.temp_scripted_stat
         self.scripted_pic = self.temp_scripted_pic
@@ -1820,46 +1847,68 @@ class ctrl_GUI:
             if temp_data[i] == '':
                 data.remove('')
         log.info(f"上一個項目:{self.Previous_title}\n本項目:{title}\n內容:{data}")
+
         if self.Previous_title == "主標":
             self.temp_scripted_detail = data
+
         elif self.Previous_title == "副標":
             self.temp_scripted_stat = data
+
         elif self.Previous_title == "大圖標題":
             self.temp_scripted_pic_text = data
+
         elif self.Previous_title == "大圖名稱":
             self.temp_scripted_pic = data
+
         elif self.Previous_title == "小圖標題":
             self.temp_scripted_small_pic_text = data
+
         elif self.Previous_title == "小圖名稱":
             self.temp_scripted_small_pic = data
+
         elif self.Previous_title == "按鈕一標題":
             self.temp_scripted_button_1_title = data
+
         elif self.Previous_title == "按鈕一網址":
             self.temp_scripted_button_1_url = data
+
         elif self.Previous_title == "按鈕二標題":
             self.temp_scripted_button_2_title = data
+
         elif self.Previous_title == "按鈕二網址":
             self.temp_scripted_button_2_url = data
+
+
         if title == "主標":
             temp = self.list_to_textEdit(self.temp_scripted_detail)
+
         elif title == "副標":
             temp = self.list_to_textEdit(self.temp_scripted_stat)
+
         elif title == "大圖標題":
             temp = self.list_to_textEdit(self.temp_scripted_pic_text)
+
         elif title == "大圖名稱":
             temp = self.list_to_textEdit(self.temp_scripted_pic)
+
         elif title == "小圖標題":
             temp = self.list_to_textEdit(self.temp_scripted_small_pic_text)
+
         elif title == "小圖名稱":
             temp = self.list_to_textEdit(self.temp_scripted_small_pic)
+
         elif title == "按鈕一標題":
             temp = self.list_to_textEdit(self.temp_scripted_button_1_title)
+
         elif title == "按鈕一網址":
             temp = self.list_to_textEdit(self.temp_scripted_button_1_url)
+
         elif title == "按鈕二標題":
             temp = self.list_to_textEdit(self.temp_scripted_button_2_title)
+
         elif title == "按鈕二網址":
             temp = self.list_to_textEdit(self.temp_scripted_button_2_url)
+
         QtTest.QTest.qWait(1)
         self.script_textEdit.setPlainText(temp)
         self.Previous_title = title
@@ -1875,29 +1924,35 @@ class ctrl_GUI:
             for i in value:
                 output = output + i + "\n"
             return output
-        else:
-            return
+        else:return
 
     def close_script_editor(self):
         log.info("close_script_editor")
-        messageBox = QMessageBox()
-        messageBox.setWindowIcon(icon)
-        messageBox.setWindowTitle(' Discord狀態修改器')
-        messageBox.setText('不儲存腳本並直接關閉編輯器?')
-        messageBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        buttonY = messageBox.button(QMessageBox.Yes)
-        buttonY.setText('是的')
-        buttonN = messageBox.button(QMessageBox.No)
-        buttonN.setText('繼續編輯')
-        messageBox.exec_()
-        if messageBox.clickedButton() == buttonY:
-            log.info('yes')
+        if self.isEdit:
+            messageBox = QMessageBox()
+            messageBox.setWindowIcon(icon)
+            messageBox.setWindowTitle(' Discord狀態修改器')
+            messageBox.setText('不儲存腳本並直接關閉編輯器?')
+            messageBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            buttonY = messageBox.button(QMessageBox.Yes)
+            buttonY.setText('是的')
+            buttonN = messageBox.button(QMessageBox.No)
+            buttonN.setText('繼續編輯')
+            messageBox.exec_()
+
+            if messageBox.clickedButton() == buttonY:
+                log.info('yes')
+                for tl in QtWidgets.QApplication.topLevelWidgets():
+                    if tl.windowTitle() == "狀態腳本設定":
+                        tl.destroy()
+                        return
+            else :
+                return
+        else:
             for tl in QtWidgets.QApplication.topLevelWidgets():
                 if tl.windowTitle() == "狀態腳本設定":
                     tl.destroy()
                     return
-        else :
-            return
 
 class UI_start_ui:
     def __init__(self):
@@ -2000,8 +2055,9 @@ class UI_start_ui:
         self.go_to_dev_web_button.setText(_translate("start_ui", "點我前往Dc Dev網站"))
         self.go_to_dev_web_button.clicked.connect(self.open_discord_dev)
         self.Enter.clicked.connect(self._init_main_ui)
-        QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.comboBox, activated=self._init_main_ui)
-        QShortcut(QtGui.QKeySequence("Ctrl+L"), start_ui, activated=log.logging_ui.show)
+
+        QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.comboBox, activated=self._init_main_ui).setAutoRepeat(False)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), start_ui, activated=log.logging_ui.show).setAutoRepeat(False)
 
     def open_discord_dev(self):
         url=QUrl("https://discord.com/developers/applications/")
@@ -2080,8 +2136,8 @@ class Ui_Save_As:
         self.label.setText(_translate("Save_As", "請輸入存檔標題:"))
         self.pushButton.setText(_translate("Save_As", "確定"))
         self.pushButton.clicked.connect(self.save_user_state)
-        QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.lineEdit, activated=self.save_user_state)
-        QShortcut(QtGui.QKeySequence("Ctrl+L"), Save_As, activated=log.logging_ui.show)
+        QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.lineEdit, activated=self.save_user_state).setAutoRepeat(False)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), Save_As, activated=log.logging_ui.show).setAutoRepeat(False)
 
     def show_window(self,dictionary):
         self.dictionary = dictionary
@@ -2157,7 +2213,7 @@ class Ui_restart_ui(object):
         restart_ui.setWindowTitle(_translate("restart_ui", "更換確認"))
         self.yes_button.clicked.connect(self.reload)
         self.No_button.clicked.connect(self.close_window)
-        QShortcut(QtGui.QKeySequence("Ctrl+L"), restart_ui, activated=log.logging_ui.show)
+        QShortcut(QtGui.QKeySequence("Ctrl+L"), restart_ui, activated=log.logging_ui.show).setAutoRepeat(False)
 
     def reload(self):
         execlp(sys.executable, sys.executable, *sys.argv)
@@ -2221,4 +2277,5 @@ if __name__ == '__main__':
     msg_box.setWindowIcon(icon)
     log.logging_ui.setWindowIcon(icon)
     sleep = QtTest.QTest.qWait
+    app.setQuitOnLastWindowClosed(True)
     UI_start_ui()

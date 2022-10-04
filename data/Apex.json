@@ -11,10 +11,10 @@
       "time_counting": true,
       "button_1_title": "",
       "button_1_url": "",
-      "button_1_activate": false,
+      "button_1_activate": true,
       "button_2_title": "",
       "button_2_url": "",
-      "button_2_activate": false
+      "button_2_activate": true
    },
    "Scripted_stored_data": {
       "time_counting": 10,

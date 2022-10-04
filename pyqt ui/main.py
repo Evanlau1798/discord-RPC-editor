@@ -706,6 +706,7 @@ class Ui_ctrl_GUI(object):
         self.cur_status_title_2.setText(_translate("ctrl_GUI", "欲設定的狀態"))
         self.status_lable.setText(_translate("ctrl_GUI", "副標"))
         self.detail_lable.setText(_translate("ctrl_GUI", "主標"))
+        self.detail_entry.setStatusTip(_translate("ctrl_GUI", "test"))
         self.detail_entry.setPlaceholderText(_translate("ctrl_GUI", "請輸入狀態標題"))
         self.status_entry.setPlaceholderText(_translate("ctrl_GUI", "請輸入狀態副標標題"))
         self.main_picture_setting_title.setText(_translate("ctrl_GUI", "主圖片設定"))
