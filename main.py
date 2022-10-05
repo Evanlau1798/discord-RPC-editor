@@ -11,7 +11,7 @@ import sys
 import requests
 
 file_title = ""
-version = "discord狀態修改器 v1.1 beta公開測試版"
+version = "discord狀態修改器 v1.1 beta公開測試版(Build 20221006.1)"
 
 class ctrl_GUI:
     def __init__(self,dir_list):
@@ -20,6 +20,7 @@ class ctrl_GUI:
         self.test = False
         self.stop = True
         self.save_window = None
+        self.picture_list = []
         if len(file_title) == 0:
             msg_box.warning("錯誤", "App ID不能為空")
             return
@@ -30,12 +31,12 @@ class ctrl_GUI:
                     data = load(json_file)
                     self.app_id = data.get("User_stored_stat",{}).get("app_id","")
                 json_file.close()
-                self.act = self.start_discord_act(self.app_id,title=file_title)
                 self.new_file = True
+                self.act = self.start_discord_act(self.app_id,title=file_title)
             else:
                 self.app_id = file_title
-                self.act = self.start_discord_act(id=self.app_id,title=int(self.app_id))
                 self.new_file = False
+                self.act = self.start_discord_act(id=self.app_id,title=int(self.app_id))
         except:
             raise Exception("檔案內容為不支援的資料形式\n請重新選擇或重新建立存檔")
         
@@ -82,35 +83,63 @@ class ctrl_GUI:
     
     def get_stored_data(self,id,title):
         log.info("get_stored_data")
-        with open(f'./data/{title}.json',encoding="UTF-8",mode="r") as json_file:
-            data = load(json_file)
-            self.is_script = data.get("User_stored_stat",{}).get("is_script",False)
-            self.detail = data.get("User_stored_stat",{}).get("detail","")
-            self.stat = data.get("User_stored_stat",{}).get("stat","")
-            self.pic = data.get("User_stored_stat",{}).get("pic","")
-            self.pic_text = data.get("User_stored_stat",{}).get("pic_text","")
-            self.small_pic = data.get("User_stored_stat",{}).get("small_pic","")
-            self.small_pic_text = data.get("User_stored_stat",{}).get("small_pic_text","")
-            self.time_count = data.get("User_stored_stat",{}).get("time_counting",True)
-            self.button_1_title = data.get("User_stored_stat",{}).get("button_1_title","")
-            self.button_1_url = data.get("User_stored_stat",{}).get("button_1_url","")
-            self.button_1_activate = data.get("User_stored_stat",{}).get("button_1_activate",False)
-            self.button_2_title = data.get("User_stored_stat",{}).get("button_2_title","")
-            self.button_2_url = data.get("User_stored_stat",{}).get("button_2_url","")
-            self.button_2_activate = data.get("User_stored_stat",{}).get("button_2_activate",False)
+        if self.new_file:
+            with open(f'./data/{title}.json',encoding="UTF-8",mode="r") as json_file:
+                data = load(json_file)
+                self.is_script = data.get("User_stored_stat",{}).get("is_script",False)
+                self.detail = data.get("User_stored_stat",{}).get("detail","")
+                self.stat = data.get("User_stored_stat",{}).get("stat","")
+                self.pic = data.get("User_stored_stat",{}).get("pic","")
+                self.pic_text = data.get("User_stored_stat",{}).get("pic_text","")
+                self.small_pic = data.get("User_stored_stat",{}).get("small_pic","")
+                self.small_pic_text = data.get("User_stored_stat",{}).get("small_pic_text","")
+                self.time_count = data.get("User_stored_stat",{}).get("time_counting",True)
+                self.button_1_title = data.get("User_stored_stat",{}).get("button_1_title","")
+                self.button_1_url = data.get("User_stored_stat",{}).get("button_1_url","")
+                self.button_1_activate = data.get("User_stored_stat",{}).get("button_1_activate",False)
+                self.button_2_title = data.get("User_stored_stat",{}).get("button_2_title","")
+                self.button_2_url = data.get("User_stored_stat",{}).get("button_2_url","")
+                self.button_2_activate = data.get("User_stored_stat",{}).get("button_2_activate",False)
 
-            self.scripted_detail:list = data.get("Scripted_stored_data",{}).get("detail",[])
-            self.scripted_stat:list = data.get("Scripted_stored_data",{}).get("stat",[])
-            self.scripted_pic:list = data.get("Scripted_stored_data",{}).get("pic",[])
-            self.scripted_pic_text:list = data.get("Scripted_stored_data",{}).get("pic_text",[])
-            self.scripted_small_pic:list = data.get("Scripted_stored_data",{}).get("small_pic",[])
-            self.scripted_small_pic_text:list = data.get("Scripted_stored_data",{}).get("small_pic_text",[])
-            self.scripted_button_1_title:list = data.get("Scripted_stored_data",{}).get("button_1_title",[])
-            self.scripted_button_1_url:list = data.get("Scripted_stored_data",{}).get("button_1_url",[])
-            self.scripted_button_2_title:list = data.get("Scripted_stored_data",{}).get("button_2_title",[])
-            self.scripted_button_2_url:list = data.get("Scripted_stored_data",{}).get("button_2_url",[])
-            self.scripted_time = data.get("Scripted_stored_data",{}).get("time_counting",1)
-        json_file.close()
+                self.scripted_detail:list = data.get("Scripted_stored_data",{}).get("detail",[])
+                self.scripted_stat:list = data.get("Scripted_stored_data",{}).get("stat",[])
+                self.scripted_pic:list = data.get("Scripted_stored_data",{}).get("pic",[])
+                self.scripted_pic_text:list = data.get("Scripted_stored_data",{}).get("pic_text",[])
+                self.scripted_small_pic:list = data.get("Scripted_stored_data",{}).get("small_pic",[])
+                self.scripted_small_pic_text:list = data.get("Scripted_stored_data",{}).get("small_pic_text",[])
+                self.scripted_button_1_title:list = data.get("Scripted_stored_data",{}).get("button_1_title",[])
+                self.scripted_button_1_url:list = data.get("Scripted_stored_data",{}).get("button_1_url",[])
+                self.scripted_button_2_title:list = data.get("Scripted_stored_data",{}).get("button_2_title",[])
+                self.scripted_button_2_url:list = data.get("Scripted_stored_data",{}).get("button_2_url",[])
+                self.scripted_time = data.get("Scripted_stored_data",{}).get("time_counting",10)
+            json_file.close()
+        else:
+            self.is_script = False
+            self.detail = ""
+            self.stat = ""
+            self.pic = ""
+            self.pic_text = ""
+            self.small_pic = ""
+            self.small_pic_text = ""
+            self.time_count = True
+            self.button_1_title = ""
+            self.button_1_url = ""
+            self.button_1_activate = False
+            self.button_2_title = ""
+            self.button_2_url = ""
+            self.button_2_activate = False
+
+            self.scripted_detail:list = []
+            self.scripted_stat:list = []
+            self.scripted_pic:list = []
+            self.scripted_pic_text:list = []
+            self.scripted_small_pic:list = []
+            self.scripted_small_pic_text:list = []
+            self.scripted_button_1_title:list = []
+            self.scripted_button_1_url:list = []
+            self.scripted_button_2_title:list = []
+            self.scripted_button_2_url:list = []
+            self.scripted_time = 10
         log.info(f"File Read:{title}")
         return
 
@@ -240,7 +269,7 @@ class ctrl_GUI:
         if button_2_isChecked:
             if len(self.scripted_button_2_title) == 0:
                 msg_box.warning("腳本錯誤","按鈕二標題的腳本沒有資料\n若不須開啟按鈕二\n請不要勾選「開啟按鈕二」")
-                self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                self.statusMessage.setText("腳本模式(已停止狀態顯示)")
                 self.activate_status_button.setEnabled(True)
                 self.app.clear()
                 return
@@ -248,7 +277,7 @@ class ctrl_GUI:
                 scripted_button_2_title = self.scripted_button_2_title
             if len(self.scripted_button_2_url) == 0:
                 msg_box.warning("腳本錯誤","按鈕二連結的腳本沒有資料\n若不須開啟按鈕二\n請不要勾選「開啟按鈕二」")
-                self.statusBar.showMessage("腳本模式(已停止狀態顯示)")
+                self.statusMessage.setText("腳本模式(已停止狀態顯示)")
                 self.activate_status_button.setEnabled(True)
                 self.app.clear()
                 return
@@ -402,12 +431,12 @@ class ctrl_GUI:
             if button_1_title != None:
                 self.cur_button_1.setText(f"{button_1_title[button_1_pos[0]]}({button_1_url[button_1_pos[1]]})")
             else:
-                self.cur_button_1.setText(f"按鈕一未啟動")
+                self.cur_button_1.setText(f"按鈕一未啟用")
             QtTest.QTest.qWait(10)
             if button_2_title != None:
                 self.cur_button_2.setText(f"{button_2_title[button_2_pos[0]]}({button_2_url[button_2_pos[1]]})")
             else:
-                self.cur_button_2.setText(f"按鈕二未啟動")
+                self.cur_button_2.setText(f"按鈕二未啟用")
 
     def set_new_normal_state(self):
         log.info("set_new_normal_state")
@@ -419,6 +448,7 @@ class ctrl_GUI:
         small_pic_text = self.smallPicture_Entry.text() if len(self.smallPicture_Entry.text()) else None
         small_pic = self.smallPicture_name_comboBox.currentText() if len(self.smallPicture_name_comboBox.currentText()) else None
         buttons = []
+
         if self.button_activate_checkBox_1.isChecked():
             bt1_title = self.button_title_Entry_1.text()
             bt1_url = self.button_url_Entry_1.text()
@@ -428,6 +458,9 @@ class ctrl_GUI:
                 return
             buttons.append({"label": f"{bt1_title}", "url": f"{bt1_url}"})
             self.cur_button_1.setText(f"{bt1_title}({bt1_url})")
+        else:
+            self.cur_button_1.setText("按紐一未啟用")
+        
         if self.button_activate_checkBox_2.isChecked():
             bt2_title = self.button_title_Entry_2.text()
             bt2_url = self.button_url_Entry_2.text()
@@ -437,6 +470,8 @@ class ctrl_GUI:
                 return
             buttons.append({"label": f"{self.button_title_Entry_2.text()}", "url": f"{self.button_url_Entry_2.text()}"})
             self.cur_button_2.setText(f"{bt2_title}({bt2_url})")
+        else:
+            self.cur_button_2.setText("按紐二未啟用")
         if len(buttons) == 0:
             buttons = None
         if self.open_time_counting_checkBox.isChecked():
@@ -448,17 +483,31 @@ class ctrl_GUI:
             time_set = False
             time_mode = None
         log.info(str(time_stamp))
+
         try:
             self.set_act(stat,detail,pic,pic_text,small_pic,small_pic_text,time_set,time_mode,time_stamp,buttons)
             if not self.ctrl_GUI.isHidden():
-                self.statusBar.showMessage("普通模式")
+                self.statusMessage.setText("普通模式")
         except Exception as e:
             log.info("錯誤")
             msg_box.warning("錯誤", e)
-        self.cur_status.setText(stat)
-        self.cur_detail.setText(detail)
-        self.cur_BigPicture.setText(f"{pic}({pic_text})")
-        self.cur_SmallPicture.setText(f"{small_pic}({small_pic_text})")
+
+        self.cur_status.setText("未設定狀態") if stat == None else self.cur_status.setText(stat)
+        self.cur_detail.setText("未設定狀態") if detail == None else self.cur_detail.setText(detail)
+        if pic == None:
+            pic = "未設定狀態"
+        if pic_text == None:
+            pic_text = ""
+        else:
+            pic_text = f"({pic_text})"
+        self.cur_BigPicture.setText(pic + pic_text)
+        if small_pic == None:
+            small_pic = "未設定狀態"
+        if small_pic_text == None:
+            small_pic_text = ""
+        else:
+            small_pic_text = f"({small_pic_text})"
+        self.cur_SmallPicture.setText(small_pic + small_pic_text)
         return
 
     def overwrite_user_state(self):
@@ -522,14 +571,13 @@ class ctrl_GUI:
     def add_picture(self):
         log.info("add_picture")
         raw_picture_list = loads(requests.get(f"https://discordapp.com/api/oauth2/applications/{self.app_id}/assets").text)
-        picture_list = []
         for i in raw_picture_list:
-            picture_list.append(i["name"])
-        picture_list.append("不顯示圖片")
-        self.bigPicture_name_comboBox.addItems(picture_list)
-        self.smallPicture_name_comboBox.addItems(picture_list)
-        self.bigPicture_name_comboBox.setCurrentText(self.pic)
-        self.smallPicture_name_comboBox.setCurrentText(self.small_pic)
+            self.picture_list.append(i["name"])
+        self.picture_list.append("不顯示圖片")
+        self.bigPicture_name_comboBox.addItems(self.picture_list)
+        self.smallPicture_name_comboBox.addItems(self.picture_list)
+        self.bigPicture_name_comboBox.setCurrentText(self.pic) if self.pic == '' else self.bigPicture_name_comboBox.setCurrentText("不顯示圖片")
+        self.smallPicture_name_comboBox.setCurrentText(self.small_pic) if self.small_pic == '' else self.smallPicture_name_comboBox.setCurrentText("不顯示圖片")
         return
 
     def setupUi(self, ctrl_GUI):
@@ -1301,8 +1349,16 @@ class ctrl_GUI:
         self.cur_detail.setText(_translate("ctrl_GUI", detail))
         self.cur_BigPicture.setText(_translate("ctrl_GUI",f"{bigPicture_name}({bigPicture})"))
         self.cur_SmallPicture.setText(_translate("ctrl_GUI",f"{smallPicture_name}({smallPicture})"))
-        self.cur_button_1.setText(_translate("ctrl_GUI", f"{button_1_title}({button_1_url})"))
-        self.cur_button_2.setText(_translate("ctrl_GUI", f"{button_2_title}({button_2_url})"))
+        if len(button_1_title) != 0 and len(button_1_url) != 0:
+            self.cur_button_1.setText(_translate("ctrl_GUI", f"{button_1_title}({button_1_url})"))
+        else:
+            self.cur_button_1.setText(_translate("ctrl_GUI", "未設定該狀態"))
+
+        if len(button_2_title) != 0 and len(button_2_url) != 0:
+            self.cur_button_2.setText(_translate("ctrl_GUI", f"{button_2_title}({button_2_url})"))
+        else:
+            self.cur_button_2.setText(_translate("ctrl_GUI", "未設定該狀態"))
+        
         self.cur_user.setText(_translate("ctrl_GUI", file_title))
         self.open_time_counting_checkBox.setChecked(self.time_count)
 
@@ -1355,7 +1411,7 @@ class ctrl_GUI:
         self.open_script_setting_Button.clicked.connect(self.show_script_setting_window)
         QShortcut(QtGui.QKeySequence("Ctrl+S"), ctrl_GUI, activated=self.overwrite_user_state).setAutoRepeat(False)
         QShortcut(QtGui.QKeySequence("Ctrl+L"), ctrl_GUI, activated=log.logging_ui.show).setAutoRepeat(False)
-        QShortcut(QtGui.QKeySequence("Ctrl+R"), ctrl_GUI, activated=self.set_new_state).setAutoRepeat(False)
+        QShortcut(QtGui.QKeySequence("Ctrl+R"), ctrl_GUI, activated=self.set_new_state)#.setAutoRepeat(False)
 
     def set_new_state(self):
         if not self.activate_status_button.isEnabled():return
@@ -1371,9 +1427,13 @@ class ctrl_GUI:
                     self.set_script_state_thread.join()
             except:pass
             self.set_new_normal_state()
+            self.activate_status_button.setEnabled(True)
 
     def show_script_setting_window(self):
         log.info("show_script_setting_window")
+        if not self.new_file:
+            msg_box.warning("錯誤","使用App id啟動狀態修改器時\n腳本需先另存新檔後才可以進行編輯")
+            return
         title = self.script_list_combobox.currentText()
         if title == "主標":
             self.script_textEdit.setText(self.list_to_textEdit(self.temp_scripted_detail))

@@ -6,15 +6,15 @@
       "stat": "\u7a4d\u5206\u806f\u8cfd(16 \u5269\u9918\u5c0f\u968a\u6578)",
       "pic": "logo",
       "pic_text": "APEX\u751a\u9ebc\u6642\u5019\u8981\u8ddf\u9032dc\u8c50\u5bcc\u72c0\u614b\u5566",
-      "small_pic": "loba",
+      "small_pic": "master",
       "small_pic_text": "\u4f5c\u5922\u5927\u5e2b(RP:87945)",
-      "time_counting": true,
+      "time_counting": false,
       "button_1_title": "",
       "button_1_url": "",
-      "button_1_activate": true,
+      "button_1_activate": false,
       "button_2_title": "",
       "button_2_url": "",
-      "button_2_activate": true
+      "button_2_activate": false
    },
    "Scripted_stored_data": {
       "time_counting": 10,
