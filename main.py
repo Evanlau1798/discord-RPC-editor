@@ -1,6 +1,4 @@
-from hashlib import new
 from os import execlp,listdir,path,mkdir
-from re import L
 from pypresence import Presence
 from threading import Thread
 from json import load,dumps,loads
@@ -14,7 +12,8 @@ import requests
 
 file_title = ""
 version_title = "discord狀態修改器 v1.1 beta公開測試版"
-tag_name = "v1.1.0a1"
+tag_name = "v1.1.0a2"
+pre_release_ver = True
 
 class ctrl_GUI:
     def __init__(self,dir_list):
@@ -530,6 +529,9 @@ class ctrl_GUI:
 
     def overwrite_user_state(self):
         log.info("overwrite user state changes...")
+        if not self.save_data_button.isEnabled():
+            log.info("新檔案，跳過寫入")
+            return
         self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:正在覆蓋新的狀態設定檔..."))
         if self.script_enable_checkBox.isChecked():
             detail = self.detail
@@ -594,8 +596,8 @@ class ctrl_GUI:
         self.picture_list.append("不顯示圖片")
         self.bigPicture_name_comboBox.addItems(self.picture_list)
         self.smallPicture_name_comboBox.addItems(self.picture_list)
-        self.bigPicture_name_comboBox.setCurrentText(self.pic) if self.pic == '' else self.bigPicture_name_comboBox.setCurrentText("不顯示圖片")
-        self.smallPicture_name_comboBox.setCurrentText(self.small_pic) if self.small_pic == '' else self.smallPicture_name_comboBox.setCurrentText("不顯示圖片")
+        self.bigPicture_name_comboBox.setCurrentText("不顯示圖片") if self.pic == '' else self.bigPicture_name_comboBox.setCurrentText(self.pic)
+        self.smallPicture_name_comboBox.setCurrentText("不顯示圖片") if self.small_pic == '' else self.smallPicture_name_comboBox.setCurrentText(self.small_pic)
         return
 
     def setupUi(self, ctrl_GUI):
@@ -2049,11 +2051,7 @@ class UI_start_ui:
 
     def get_file_name(self):
         log.info("start get_file_name")
-        try:
-            self.dir_raw_list = listdir("./data")
-        except:
-            mkdir("./data")
-            self.dir_raw_list = None
+        self.dir_raw_list = listdir("./data")
         self.dir_list = []
         for i in self.dir_raw_list:
             if ".json" in i:
@@ -2343,10 +2341,8 @@ class Ui_logging_ui(QWidget):
 
 class Ui_new_ver():    #測試中
     def __init__(self):
-        self.get_version()
         self.get_data()
-        #if self.compare() and self.never_remind_me == False:
-        if False:
+        if self.never_remind_me == False and self.get_version() :
             self.new_ver = QWidget()
             self.setupUi(self.new_ver)
             self.add_description()
@@ -2360,15 +2356,18 @@ class Ui_new_ver():    #測試中
             with open('./data/UserData.rpc', "r", encoding="UTF-8") as json_file:
                 data = load(json_file)
                 self.never_remind_me = data.get("User_data").get("never_remind_me")
-                self.file_id = data.get("version_id")
             json_file.close()
         except:
+            self.never_remind_me = False
+            try:
+                listdir("./data")
+            except:
+                mkdir("./data")
             with open('./data/UserData.rpc', "w", encoding="UTF-8") as json_file:
                 dic = {
                     "User_data":{
                         "never_remind_me":False
-                    },
-                    "version_id":self.id
+                    }
                 }
                 json_object = dumps(dic, indent = 3)
                 json_file.write(json_object)
@@ -2376,20 +2375,22 @@ class Ui_new_ver():    #測試中
         return
 
     def get_version(self):
-        json_file = loads(requests.get("https://api.github.com/repos/Evanlau1798/discord-RPC-editor/releases/latest").text)
-        self.id = json_file.get("id")
-        self.body = json_file.get("body")
-        self.download_link = json_file.get("html_url")
-        self.tag_name = json_file.get("tag_name")
-        return
-
-    def compare(self):#last_ver_id = 77042355
-        try:
-            if self.file_id == self.id:
+        json_file = loads(requests.get("https://api.github.com/repos/Evanlau1798/discord-RPC-editor/releases").text)
+        for i in json_file:
+            pre_release = i.get("prerelease")
+            tag = i.get("tag_name")
+            if tag == tag_name:
                 return False
-            else:
+            elif pre_release_ver and pre_release == True and tag_name != tag:
+                self.body = i.get("body")
+                self.download_link = i.get("html_url")
+                self.tag_name = tag
                 return True
-        except:return
+            elif tag_name != tag and pre_release != True:
+                self.body = i.get("body")
+                self.download_link = i.get("html_url")
+                self.tag_name = tag
+                return True
 
     def add_description(self):
         self.new_version.setText(self.tag_name)
@@ -2477,8 +2478,8 @@ class Ui_new_ver():    #測試中
 
     def retranslateUi(self, new_ver):
         _translate = QtCore.QCoreApplication.translate
-        new_ver.setWindowTitle(_translate("new_ver", "DIscord狀態修改器 新版本通知"))
-        self.new_version_label.setText(_translate("new_ver", "檢測到新版本: "))
+        new_ver.setWindowTitle(_translate("new_ver", "Discord狀態修改器 新版本通知"))
+        self.new_version_label.setText(_translate("new_ver", "檢測到新版本:"))
         self.new_version.setText(_translate("new_ver", "0.0.0"))
         self.never_remind_me_checkBox.setText(_translate("new_ver", "不要再提醒我"))
         self.remind_me_next_time_pushButton.setText(_translate("new_ver", "忽略更新"))
@@ -2497,8 +2498,7 @@ class Ui_new_ver():    #測試中
                 dic = {
                     "User_data":{
                         "never_remind_me":True
-                    },
-                    "version_id":self.id
+                    }
                 }
                 json_object = dumps(dic, indent = 3)
                 json_file.write(json_object)
