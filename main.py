@@ -1,9 +1,11 @@
-from os import execlp,listdir,path
+from hashlib import new
+from os import execlp,listdir,path,mkdir
+from re import L
 from pypresence import Presence
 from threading import Thread
 from json import load,dumps,loads
 from PyQt5 import QtCore, QtGui, QtWidgets,QtTest
-from PyQt5.QtCore import QUrl,QThread
+from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QFontDatabase,QTextCursor,QDesktopServices
 from PyQt5.QtWidgets import QMessageBox,QWidget, QApplication, QShortcut, QMainWindow,QSystemTrayIcon
 import qdarktheme
@@ -11,7 +13,8 @@ import sys
 import requests
 
 file_title = ""
-version = "discord狀態修改器 v1.1 beta公開測試版(Build 20221006.1)"
+version_title = "discord狀態修改器 v1.1 beta公開測試版"
+tag_name = "v1.1.0a1"
 
 class ctrl_GUI:
     def __init__(self,dir_list):
@@ -22,8 +25,7 @@ class ctrl_GUI:
         self.save_window = None
         self.picture_list = []
         if len(file_title) == 0:
-            msg_box.warning("錯誤", "App ID不能為空")
-            return
+            raise Exception("App ID不能為空")
             
         try:
             if file_title in self.dir_list:
@@ -220,7 +222,7 @@ class ctrl_GUI:
             elif time_mode == "經過時間":
                 if time_stamp > start_time:
                     msg_box.warning("錯誤", "經過時間為負數")
-                    self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態設定失敗"))
+                    self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:狀態設定失敗"))
                     self.statusMessage.setText("腳本模式(已停止狀態顯示)")
                     self.activate_status_button.setEnabled(True)
                     self.app.clear()
@@ -230,7 +232,7 @@ class ctrl_GUI:
             elif time_mode == "剩餘時間":
                 if time_stamp < start_time:
                     msg_box.warning("錯誤", "剩餘時間為負數")
-                    self.cur_status_grid_title.setText(app.translate("ctrl_GUI", f"目前狀態:狀態設定失敗"))
+                    self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:狀態設定失敗"))
                     self.statusMessage.setText("腳本模式(已停止狀態顯示)")
                     self.activate_status_button.setEnabled(True)
                     self.app.clear()
@@ -245,6 +247,7 @@ class ctrl_GUI:
             if len(self.scripted_button_1_title) == 0:
                 msg_box.warning("腳本錯誤","按鈕一標題的腳本沒有資料\n若不須開啟按鈕一\n請不要勾選「開啟按鈕一」")
                 self.statusMessage.setText("腳本模式(已停止狀態顯示)")
+                self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:狀態設定失敗"))
                 self.activate_status_button.setEnabled(True)
                 self.app.clear()
                 return
@@ -253,17 +256,25 @@ class ctrl_GUI:
             if len(self.scripted_button_1_url) == 0:
                 msg_box.warning("腳本錯誤","按鈕一連結的腳本沒有資料\n若不須開啟按鈕一\n請不要勾選「開啟按鈕一」")
                 self.statusMessage.setText("腳本模式(已停止狀態顯示)")
+                self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:狀態設定失敗"))
                 self.activate_status_button.setEnabled(True)
                 self.app.clear()
                 return
             else:
+                for i in range(len(self.scripted_button_1_url)):
+                    if not "https://" in self.scripted_button_1_url[i] or "http://" in self.scripted_button_1_url[i]:
+                        msg_box.warning("腳本錯誤",f"按鈕一連結的腳本含有非網址之內容\n位置:第{i + 1}行\n錯誤內容:{self.scripted_button_1_url[i]}")
+                        self.statusMessage.setText("腳本模式(已停止狀態顯示)")
+                        self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:狀態設定失敗"))
+                        self.activate_status_button.setEnabled(True)
+                        self.app.clear()
+                        return
                 scripted_button_1_url = self.scripted_button_1_url
             button_1 = self.button_1_cycle(scripted_button_1_title,scripted_button_1_url)
         else:
             button_1 = None
             scripted_button_1_title = None
             scripted_button_1_url = None
-            #button_1_list_pos = None
 
         QtTest.QTest.qWait(10)
         if button_2_isChecked:
@@ -282,13 +293,20 @@ class ctrl_GUI:
                 self.app.clear()
                 return
             else:
+                for i in range(len(self.scripted_button_2_url)):
+                    if not "https://" in self.scripted_button_2_url[i] or "http://" in self.scripted_button_2_url[i]:
+                        msg_box.warning("腳本錯誤",f"按鈕二連結的腳本含有非網址之內容\n位置:第{i + 1}行\n錯誤內容:{self.scripted_button_2_url[i]}")
+                        self.statusMessage.setText("腳本模式(已停止狀態顯示)")
+                        self.cur_status_grid_title.setText(app.translate("ctrl_GUI", "目前狀態:狀態設定失敗"))
+                        self.activate_status_button.setEnabled(True)
+                        self.app.clear()
+                        return
                 scripted_button_2_url = self.scripted_button_2_url
             button_2 = self.button_2_cycle(scripted_button_2_title,scripted_button_2_url)
         else:
             button_2 = None
             scripted_button_2_title = None
             scripted_button_2_url = None
-            #button_2_list_pos = None
         
         try:
             while self.set_script_state_thread.is_alive():
@@ -1270,7 +1288,7 @@ class ctrl_GUI:
     
     def retranslateUi(self, ctrl_GUI):
         _translate = QtCore.QCoreApplication.translate
-        ctrl_GUI.setWindowTitle(_translate("ctrl_GUI", version))
+        ctrl_GUI.setWindowTitle(_translate("ctrl_GUI", version_title))
         self.status_lable.setText(_translate("ctrl_GUI", "副標"))
         self.detail_lable.setText(_translate("ctrl_GUI", "主標"))
         self.detail_entry.setPlaceholderText(_translate("ctrl_GUI", "請輸入狀態標題"))
@@ -1411,7 +1429,7 @@ class ctrl_GUI:
         self.open_script_setting_Button.clicked.connect(self.show_script_setting_window)
         QShortcut(QtGui.QKeySequence("Ctrl+S"), ctrl_GUI, activated=self.overwrite_user_state).setAutoRepeat(False)
         QShortcut(QtGui.QKeySequence("Ctrl+L"), ctrl_GUI, activated=log.logging_ui.show).setAutoRepeat(False)
-        QShortcut(QtGui.QKeySequence("Ctrl+R"), ctrl_GUI, activated=self.set_new_state)#.setAutoRepeat(False)
+        QShortcut(QtGui.QKeySequence("Ctrl+R"), ctrl_GUI, activated=self.set_new_state).setAutoRepeat(False)
 
     def set_new_state(self):
         if not self.activate_status_button.isEnabled():return
@@ -1468,9 +1486,12 @@ class ctrl_GUI:
         cursor = self.script_textEdit.textCursor()
         cursor.movePosition(QTextCursor.End)
         self.script_textEdit.setTextCursor(cursor)
+        sleep(1)
         self.time_change_spinBox.setValue(self.scripted_time)
         self.isEdit = False
+        sleep(1)
         self.script_setting_ui.show()
+        sleep(1)
         self.script_textEdit.setFocus()
 
     def main_window_reload(self):
@@ -2016,14 +2037,11 @@ class ctrl_GUI:
 
 class UI_start_ui:
     def __init__(self):
-        app = QtWidgets.QApplication(sys.argv)
-        app.setStyleSheet(qdarktheme.load_stylesheet())
         self.start_ui = QtWidgets.QWidget()
         self.setupUi(self.start_ui)
         self.start_ui.setWindowIcon(icon)
         self.get_file_name()
         self.start_ui.show()
-        sys.exit(app.exec_())
 
     def close(self):
         log.info("start_ui closed")
@@ -2031,10 +2049,17 @@ class UI_start_ui:
 
     def get_file_name(self):
         log.info("start get_file_name")
-        self.dir_raw_list = listdir("./data")
+        try:
+            self.dir_raw_list = listdir("./data")
+        except:
+            mkdir("./data")
+            self.dir_raw_list = None
         self.dir_list = []
         for i in self.dir_raw_list:
-            self.dir_list.append(i.split(".")[0])
+            if ".json" in i:
+                self.dir_list.append(i.split(".")[0])
+            else:
+                pass
         self.comboBox.addItems(self.dir_list)
 
     def setupUi(self, start_ui):
@@ -2316,6 +2341,171 @@ class Ui_logging_ui(QWidget):
     def info(self,msg):
         self.plainTextEdit.appendPlainText(msg)
 
+class Ui_new_ver():    #測試中
+    def __init__(self):
+        self.get_version()
+        self.get_data()
+        #if self.compare() and self.never_remind_me == False:
+        if False:
+            self.new_ver = QWidget()
+            self.setupUi(self.new_ver)
+            self.add_description()
+            self.new_ver.show()
+        else:
+            self.start = UI_start_ui()
+        sys.exit(app.exec_())
+
+    def get_data(self):
+        try:
+            with open('./data/UserData.rpc', "r", encoding="UTF-8") as json_file:
+                data = load(json_file)
+                self.never_remind_me = data.get("User_data").get("never_remind_me")
+                self.file_id = data.get("version_id")
+            json_file.close()
+        except:
+            with open('./data/UserData.rpc', "w", encoding="UTF-8") as json_file:
+                dic = {
+                    "User_data":{
+                        "never_remind_me":False
+                    },
+                    "version_id":self.id
+                }
+                json_object = dumps(dic, indent = 3)
+                json_file.write(json_object)
+            json_file.close()
+        return
+
+    def get_version(self):
+        json_file = loads(requests.get("https://api.github.com/repos/Evanlau1798/discord-RPC-editor/releases/latest").text)
+        self.id = json_file.get("id")
+        self.body = json_file.get("body")
+        self.download_link = json_file.get("html_url")
+        self.tag_name = json_file.get("tag_name")
+        return
+
+    def compare(self):#last_ver_id = 77042355
+        try:
+            if self.file_id == self.id:
+                return False
+            else:
+                return True
+        except:return
+
+    def add_description(self):
+        self.new_version.setText(self.tag_name)
+        self.update_body_textBrowser.setText(self.body)
+        return
+
+    def setupUi(self, new_ver):
+        new_ver.setObjectName("new_ver")
+        new_ver.resize(500, 300)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(new_ver.sizePolicy().hasHeightForWidth())
+        new_ver.setSizePolicy(sizePolicy)
+        new_ver.setMinimumSize(QtCore.QSize(500, 300))
+        new_ver.setMaximumSize(QtCore.QSize(500, 300))
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(new_ver)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.new_version_label = QtWidgets.QLabel(new_ver)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.new_version_label.sizePolicy().hasHeightForWidth())
+        self.new_version_label.setSizePolicy(sizePolicy)
+        self.new_version_label.setObjectName("new_version_label")
+        self.horizontalLayout_2.addWidget(self.new_version_label)
+        self.new_version = QtWidgets.QLabel(new_ver)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.new_version.sizePolicy().hasHeightForWidth())
+        self.new_version.setSizePolicy(sizePolicy)
+        self.new_version.setObjectName("new_version")
+        self.horizontalLayout_2.addWidget(self.new_version)
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem)
+        self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.update_body_textBrowser = QtWidgets.QTextBrowser(new_ver)
+        self.update_body_textBrowser.setObjectName("update_body_textBrowser")
+        self.verticalLayout_3.addWidget(self.update_body_textBrowser)
+        self.verticalLayout.addLayout(self.verticalLayout_3)
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.never_remind_me_checkBox = QtWidgets.QCheckBox(new_ver)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.never_remind_me_checkBox.sizePolicy().hasHeightForWidth())
+        self.never_remind_me_checkBox.setSizePolicy(sizePolicy)
+        self.never_remind_me_checkBox.setObjectName("never_remind_me_checkBox")
+        self.horizontalLayout.addWidget(self.never_remind_me_checkBox)
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem1)
+        self.remind_me_next_time_pushButton = QtWidgets.QPushButton(new_ver)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.remind_me_next_time_pushButton.sizePolicy().hasHeightForWidth())
+        self.remind_me_next_time_pushButton.setSizePolicy(sizePolicy)
+        self.remind_me_next_time_pushButton.setMinimumSize(QtCore.QSize(120, 0))
+        self.remind_me_next_time_pushButton.setObjectName("remind_me_next_time_pushButton")
+        self.horizontalLayout.addWidget(self.remind_me_next_time_pushButton)
+        self.download_pushButton = QtWidgets.QPushButton(new_ver)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.download_pushButton.sizePolicy().hasHeightForWidth())
+        self.download_pushButton.setSizePolicy(sizePolicy)
+        self.download_pushButton.setMinimumSize(QtCore.QSize(120, 0))
+        self.download_pushButton.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.download_pushButton.setObjectName("download_pushButton")
+        self.horizontalLayout.addWidget(self.download_pushButton)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.verticalLayout_2.addLayout(self.verticalLayout)
+
+        self.retranslateUi(new_ver)
+        QtCore.QMetaObject.connectSlotsByName(new_ver)
+
+    def retranslateUi(self, new_ver):
+        _translate = QtCore.QCoreApplication.translate
+        new_ver.setWindowTitle(_translate("new_ver", "DIscord狀態修改器 新版本通知"))
+        self.new_version_label.setText(_translate("new_ver", "檢測到新版本: "))
+        self.new_version.setText(_translate("new_ver", "0.0.0"))
+        self.never_remind_me_checkBox.setText(_translate("new_ver", "不要再提醒我"))
+        self.remind_me_next_time_pushButton.setText(_translate("new_ver", "忽略更新"))
+        self.download_pushButton.setText(_translate("new_ver", "前往下載"))
+        new_ver.setWindowIcon(icon)
+        self.download_pushButton.clicked.connect(self.open_download_page)
+        self.remind_me_next_time_pushButton.clicked.connect(self.start_RPC_editor)
+
+    def open_download_page(self):
+        QDesktopServices.openUrl(QUrl(self.download_link))
+        return
+
+    def start_RPC_editor(self):
+        if self.never_remind_me_checkBox.isChecked():
+            with open(f'./data/UserData.rpc', "w", encoding="UTF-8") as json_file:
+                dic = {
+                    "User_data":{
+                        "never_remind_me":True
+                    },
+                    "version_id":self.id
+                }
+                json_object = dumps(dic, indent = 3)
+                json_file.write(json_object)
+            json_file.close()
+        self.new_ver.destroy()
+        self.start = UI_start_ui()
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyleSheet(qdarktheme.load_stylesheet())
@@ -2338,4 +2528,4 @@ if __name__ == '__main__':
     log.logging_ui.setWindowIcon(icon)
     sleep = QtTest.QTest.qWait
     app.setQuitOnLastWindowClosed(True)
-    UI_start_ui()
+    Ui_new_ver()

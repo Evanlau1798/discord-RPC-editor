@@ -1,14 +1,14 @@
 {
    "User_stored_stat": {
       "app_id": "971442812329525340",
-      "is_script": true,
+      "is_script": false,
       "detail": "\u66b4\u98a8\u9ede",
       "stat": "\u7a4d\u5206\u806f\u8cfd(16 \u5269\u9918\u5c0f\u968a\u6578)",
       "pic": "logo",
       "pic_text": "APEX\u751a\u9ebc\u6642\u5019\u8981\u8ddf\u9032dc\u8c50\u5bcc\u72c0\u614b\u5566",
-      "small_pic": "master",
+      "small_pic": "loba",
       "small_pic_text": "\u4f5c\u5922\u5927\u5e2b(RP:87945)",
-      "time_counting": false,
+      "time_counting": true,
       "button_1_title": "",
       "button_1_url": "",
       "button_1_activate": false,
@@ -98,7 +98,8 @@
       ],
       "button_1_url": [
          "https://www.google.com",
-         "https://discord.com/developers/docs/interactions/application-commands"
+         "https://discord.com/developers/docs/interactions/application-commands",
+         "123"
       ],
       "button_2_title": [
          "\u3000\u614b\u8173\u672c\u6e2c\u8a66\u4e2d",
@@ -115,7 +116,7 @@
          "\u72c0\u3000\u8173\u672c\u6e2c\u8a66\u4e2d"
       ],
       "button_2_url": [
-         "http://www.google.com"
+         "https://www.google.com"
       ]
    }
 }

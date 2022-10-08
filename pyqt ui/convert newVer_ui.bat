@@ -1,0 +1,1 @@
+pyuic5 -x NewVer.ui -o NewVer.py
