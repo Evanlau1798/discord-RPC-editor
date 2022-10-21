@@ -77,6 +77,12 @@
          <property name="enabled">
           <bool>true</bool>
          </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="font">
           <font>
            <pointsize>12</pointsize>
@@ -127,7 +133,7 @@
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>24</height>
+           <height>16777215</height>
           </size>
          </property>
          <item>
@@ -263,15 +269,20 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>53</width>
+           <width>16777215</width>
            <height>16777215</height>
           </size>
          </property>
          <property name="sizeIncrement">
           <size>
-           <width>55</width>
+           <width>-1</width>
            <height>0</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <stylestrategy>PreferDefault</stylestrategy>
+          </font>
          </property>
          <property name="minimum">
           <number>10</number>
@@ -339,7 +350,7 @@
        <item>
         <widget class="QPushButton" name="close_script_editor_button">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -353,13 +364,23 @@
          <property name="maximumSize">
           <size>
            <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="baseSize">
+          <size>
+           <width>0</width>
            <height>55</height>
           </size>
          </property>
          <property name="font">
           <font>
            <pointsize>12</pointsize>
+           <stylestrategy>PreferDefault</stylestrategy>
           </font>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="text">
           <string>關閉編輯器</string>
@@ -369,7 +390,7 @@
        <item>
         <widget class="QPushButton" name="save_script_button">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -383,13 +404,29 @@
          <property name="maximumSize">
           <size>
            <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="baseSize">
+          <size>
+           <width>0</width>
            <height>55</height>
           </size>
          </property>
          <property name="font">
           <font>
            <pointsize>12</pointsize>
+           <weight>50</weight>
+           <italic>false</italic>
+           <bold>false</bold>
+           <underline>false</underline>
+           <strikeout>false</strikeout>
+           <stylestrategy>PreferDefault</stylestrategy>
+           <kerning>true</kerning>
           </font>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
          </property>
          <property name="text">
           <string>儲存腳本並關閉編輯器</string>
