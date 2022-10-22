@@ -2576,8 +2576,6 @@ if __name__ == '__main__':
         log.logging_ui.setWindowTitle("discord狀態修改器執行紀錄:除錯模式")
     log.info("start discord RPC editor")
     msg_box = msg_window()
-    #log.info(sys.executable)
-    #log.info(path.abspath(__file__))
     msg_box.setWindowIcon(icon)
     log.logging_ui.setWindowIcon(icon)
     sleep = QtTest.QTest.qWait
