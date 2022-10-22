@@ -1,4 +1,4 @@
-from os import execlp,listdir,path,mkdir
+from os import execlp,listdir,mkdir
 from pypresence import Presence
 from threading import Thread
 from json import load,dumps,loads
@@ -11,9 +11,9 @@ from requests import get
 import sys
 
 file_title = ""
-tag_name = "v1.1.0"
+tag_name = "v1.1.1"
 pre_release_ver = False
-version_title = "discord狀態修改器 v1.1"
+version_title = "discord狀態修改器 v1.1.1"
 
 class ctrl_GUI:
     def __init__(self,dir_list):
@@ -608,7 +608,7 @@ class ctrl_GUI:
         sizePolicy.setHeightForWidth(ctrl_GUI.sizePolicy().hasHeightForWidth())
         ctrl_GUI.setSizePolicy(sizePolicy)
         ctrl_GUI.setMinimumSize(QtCore.QSize(1065, 400))
-        ctrl_GUI.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        ctrl_GUI.setMaximumSize(QtCore.QSize(1065, 400))
         ctrl_GUI.setSizeIncrement(QtCore.QSize(1, 1))
         font = QtGui.QFont()
         font.setFamily("SF Pro Display")
@@ -2384,7 +2384,8 @@ class Ui_logging_ui(QWidget):
         self.logging_ui.move(100, 180)
 
     def info(self,msg):
-        self.plainTextEdit.appendPlainText(msg)
+        time = str(QtCore.QDateTime.currentDateTime().toPyDateTime().time())
+        self.plainTextEdit.appendPlainText(f"[{time}] {msg}")
 
 class Ui_new_ver():    #測試中
     def __init__(self):
@@ -2423,7 +2424,7 @@ class Ui_new_ver():    #測試中
         return
 
     def get_version(self):
-        log.info(f"get_version\ncurrent version={tag_name}\nis prerelease={pre_release_ver}")
+        log.info(f"get_version, current version={tag_name}, is prerelease={pre_release_ver}")
         json_file = loads(get("https://api.github.com/repos/Evanlau1798/discord-RPC-editor/releases").text)
         for i in json_file:
             pre_release = i.get("prerelease")
@@ -2431,7 +2432,7 @@ class Ui_new_ver():    #測試中
             if tag == tag_name:
                 return False
             elif pre_release_ver and pre_release == True and tag_name != tag:
-                self.body = i.get("body")
+                self.body = i.get("body")                
                 self.download_link = i.get("html_url")
                 self.tag_name = tag
                 return True
@@ -2575,8 +2576,8 @@ if __name__ == '__main__':
         log.logging_ui.setWindowTitle("discord狀態修改器執行紀錄:除錯模式")
     log.info("start discord RPC editor")
     msg_box = msg_window()
-    log.info(sys.executable)
-    log.info(path.abspath(__file__))
+    #log.info(sys.executable)
+    #log.info(path.abspath(__file__))
     msg_box.setWindowIcon(icon)
     log.logging_ui.setWindowIcon(icon)
     sleep = QtTest.QTest.qWait
