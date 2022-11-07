@@ -11,9 +11,9 @@ from requests import get
 import sys
 
 file_title = ""
-tag_name = "v1.1.1"
+tag_name = "v1.1.2"
 pre_release_ver = False
-version_title = "discord狀態修改器 v1.1.1"
+version_title = "discord狀態修改器 v1.1.2"
 
 class ctrl_GUI:
     def __init__(self,dir_list):
@@ -26,20 +26,21 @@ class ctrl_GUI:
         if len(file_title) == 0:
             raise Exception("App ID不能為空")
             
-        try:
-            if file_title in self.dir_list:
+        if file_title in self.dir_list:
+            try:
                 with open(f'.\data\{file_title}.json',encoding="UTF-8",mode="r") as json_file:
                     data = load(json_file)
                     self.app_id = data.get("User_stored_stat",{}).get("app_id","")
-                json_file.close()
-                self.new_file = True
-                self.act = self.start_discord_act(self.app_id,title=file_title)
-            else:
-                self.app_id = file_title
-                self.new_file = False
-                self.act = self.start_discord_act(id=self.app_id,title=int(self.app_id))
-        except:
-            raise Exception("檔案內容為不支援的資料形式\n請重新選擇或重新建立存檔")
+            except Exception as e:
+                raise Exception(f"檔案內容為不支援的資料形式\n請重新選擇或重新建立存檔\n\n錯誤碼:{e}")
+            json_file.close()
+            self.new_file = True
+            self.act = self.start_discord_act(self.app_id,title=file_title)
+        else:
+            self.app_id = file_title
+            self.new_file = False
+            self.act = self.start_discord_act(id=self.app_id,title=int(self.app_id))
+        
         
         self.ctrl_GUI = QMainWindow()
         self.setupUi(self.ctrl_GUI)
@@ -52,10 +53,11 @@ class ctrl_GUI:
         return
 
     def thread_checker(self):
+        refresh_picture_time = 0
         while True:
             sleep(1000)
-            #window_size = str(self.ctrl_GUI.size())
-            #self.statusMessage.setText(window_size)
+            refresh_picture_time += 1
+            #print(refresh_picture_time)
             if not self.istray:
                 window = 0
                 for tl in QtWidgets.QApplication.topLevelWidgets():
@@ -66,6 +68,9 @@ class ctrl_GUI:
                     app.quit()
                     self.app.close()
                     return
+            if refresh_picture_time == 120:
+                self.refresh_picture_list()
+                refresh_picture_time = 0
 
     def start_discord_act(self,id,title):
         try:
@@ -596,6 +601,18 @@ class ctrl_GUI:
         self.smallPicture_name_comboBox.addItems(self.picture_list)
         self.bigPicture_name_comboBox.setCurrentText("不顯示圖片") if self.pic == '' else self.bigPicture_name_comboBox.setCurrentText(self.pic)
         self.smallPicture_name_comboBox.setCurrentText("不顯示圖片") if self.small_pic == '' else self.smallPicture_name_comboBox.setCurrentText(self.small_pic)
+        return
+
+    def refresh_picture_list(self):
+        raw_picture_list = loads(get(f"https://discordapp.com/api/oauth2/applications/{self.app_id}/assets").text)
+        picture_list = []
+        for i in raw_picture_list:
+            picture_list.append(i["name"])
+        picture_list.append("不顯示圖片")
+        if len(picture_list) != len(self.picture_list):
+            self.picture_list = picture_list
+            self.bigPicture_name_comboBox.setItemData(picture_list)
+            self.smallPicture_name_comboBox.setItemData(picture_list)
         return
 
     def setupUi(self, ctrl_GUI):
@@ -2090,6 +2107,7 @@ class UI_start_ui:
         self.setupUi(self.start_ui)
         self.start_ui.setWindowIcon(icon)
         self.get_file_name()
+        #print(self.start_ui.sizeHint().width())
         self.start_ui.show()
 
     def close(self):
@@ -2560,9 +2578,9 @@ class Ui_new_ver():    #測試中
         self.start = UI_start_ui()
 
 if __name__ == '__main__':
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
     app.setStyleSheet(load_stylesheet())
-    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     log = Ui_logging_ui()
     try:
         temp_file = sys._MEIPASS
