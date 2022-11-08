@@ -57,7 +57,7 @@ class ctrl_GUI:
         while True:
             sleep(1000)
             refresh_picture_time += 1
-            #print(refresh_picture_time)
+            print(refresh_picture_time)
             if not self.istray:
                 window = 0
                 for tl in QtWidgets.QApplication.topLevelWidgets():
@@ -611,8 +611,14 @@ class ctrl_GUI:
         picture_list.append("不顯示圖片")
         if len(picture_list) != len(self.picture_list):
             self.picture_list = picture_list
-            self.bigPicture_name_comboBox.setItemData(picture_list)
-            self.smallPicture_name_comboBox.setItemData(picture_list)
+            cur_s_pic = self.smallPicture_name_comboBox.currentText()
+            cur_b_pic = self.bigPicture_name_comboBox.currentText()
+            self.smallPicture_name_comboBox.clear()
+            self.smallPicture_name_comboBox.addItems(picture_list)
+            self.smallPicture_name_comboBox.setCurrentText(cur_s_pic)
+            self.bigPicture_name_comboBox.clear()
+            self.bigPicture_name_comboBox.addItems(picture_list)
+            self.bigPicture_name_comboBox.setCurrentText(cur_b_pic)
         return
 
     def setupUi(self, ctrl_GUI):
