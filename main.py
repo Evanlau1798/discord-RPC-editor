@@ -11,9 +11,9 @@ from requests import get
 import sys
 
 file_title = ""
-tag_name = "v1.1.2"
+tag_name = "v1.1.3"
 pre_release_ver = False
-version_title = "discord狀態修改器 v1.1.2"
+version_title = "discord狀態修改器 v1.1.3"
 
 class ctrl_GUI:
     def __init__(self,dir_list):
@@ -57,7 +57,7 @@ class ctrl_GUI:
         while True:
             sleep(1000)
             refresh_picture_time += 1
-            print(refresh_picture_time)
+            #print(refresh_picture_time)
             if not self.istray:
                 window = 0
                 for tl in QtWidgets.QApplication.topLevelWidgets():
@@ -846,6 +846,7 @@ class ctrl_GUI:
         self.smallPicture_name_comboBox.setSizePolicy(sizePolicy)
         self.smallPicture_name_comboBox.setMinimumSize(QtCore.QSize(210, 24))
         self.smallPicture_name_comboBox.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.smallPicture_name_comboBox.setEditable(True)
         self.smallPicture_name_comboBox.setObjectName("smallPicture_name_comboBox")
         self.smallPicture_setting_grid.addWidget(self.smallPicture_name_comboBox, 0, 3, 1, 1)
         self.main_status_grid.addLayout(self.smallPicture_setting_grid, 3, 1, 1, 1)
@@ -969,6 +970,7 @@ class ctrl_GUI:
         self.bigPicture_name_comboBox.setSizePolicy(sizePolicy)
         self.bigPicture_name_comboBox.setMinimumSize(QtCore.QSize(210, 24))
         self.bigPicture_name_comboBox.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.bigPicture_name_comboBox.setEditable(True)
         self.bigPicture_name_comboBox.setObjectName("bigPicture_name_comboBox")
         self.main_picture_setting_grid.addWidget(self.bigPicture_name_comboBox, 0, 3, 1, 1)
         self.bigPicture_lable = QtWidgets.QLabel(self.centralwidget)

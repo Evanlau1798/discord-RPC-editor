@@ -566,6 +566,9 @@
               <height>16777215</height>
              </size>
             </property>
+            <property name="editable">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
          </layout>
@@ -863,6 +866,9 @@
               <width>16777215</width>
               <height>16777215</height>
              </size>
+            </property>
+            <property name="editable">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
